@@ -1,6 +1,6 @@
 # sendgrid_thin
 
-A thin wrapper around the SendGrid API.
+A thin wrapper around the SendGrid V3 API.
 
 It does not use the crate `tokio` or `hyper` and is therefore very lightweight and do not interfere with your existing runtime.
 
