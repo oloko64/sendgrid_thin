@@ -6,7 +6,9 @@ It does not use the crate `tokio` or `hyper` and is therefore very lightweight a
 
 You can use it inside your Actix, Axum or Rocket application without any problems.
 
-It's also very easy to use.
+To get the API key, you need to create an account on SendGrid and create an API key.
+
+I recommend the [dotenvy](https://crates.io/crates/dotenvy) crate to load the API key from an environment variable.
 
 ## Usage
 
@@ -22,3 +24,4 @@ It's also very easy to use.
             Err(err) => println!("Error sending email: {}", err),
         }
      }
+```
