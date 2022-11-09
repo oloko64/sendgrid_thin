@@ -3,6 +3,11 @@ name = "sendgrid_thin"
 version = "0.1.0"
 edition = "2021"
 authors = ["OLoKo64 <reinaldorozatoj.11cg1@aleeas.com>"]
+description = "A small unofficial library to send emails using Sendgrid."
+categories = ["api-bindings"]
+homepage = "https://sendgrid.com"
+repository = "https://github.com/OLoKo64/sendgrid_thin"
+license = "MIT"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
