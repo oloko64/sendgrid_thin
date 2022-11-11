@@ -38,12 +38,12 @@ impl<'a> Sendgrid<'a> {
     /// ```
     /// use sendgrid_thin::Sendgrid;
     /// let sendgrid = Sendgrid::new("SENDGRID_API_KEY", "to_email@example.com", "from_email@example.com");
-    /// match sendgrid.send_mail("subject", "body") {
+    /// match sendgrid.send("subject", "body") {
     ///    Ok(_) => println!("Email sent successfully"),
     ///    Err(err) => println!("Error sending email: {}", err),
     /// }
     /// ```
-    pub fn send_mail(&self, subject: &str, body: &str) -> Result<(), Box<dyn Error>> {
+    pub fn send(&self, subject: &str, body: &str) -> Result<(), Box<dyn Error>> {
         ureq::post("https://api.sendgrid.com/v3/mail/send")
             .set("Authorization", &format!("Bearer {}", self.api_key))
             .set("Content-Type", "application/json")
@@ -59,7 +59,7 @@ impl<'a> Sendgrid<'a> {
     /// use sendgrid_thin::Sendgrid;
     /// let mut sendgrid = Sendgrid::new("SENDGRID_API_KEY", "to_email@example.com", "from_email@example.com");
     /// sendgrid.add_cc_emails(&["cc_email1@example.com", "cc_email2@example.com"]);
-    /// match sendgrid.send_mail("subject", "body") {
+    /// match sendgrid.send("subject", "body") {
     ///    Ok(_) => println!("Email sent successfully"),
     ///    Err(err) => println!("Error sending email: {}", err),
     /// }

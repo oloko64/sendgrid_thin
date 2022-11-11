@@ -20,7 +20,7 @@ I recommend the [dotenvy](https://crates.io/crates/dotenvy) crate to load the AP
         sendgrid.set_content_type(ContentType::Html);
         sendgrid.add_cc_emails(&["cc_email1@example.com", "cc_email2@example.com"]);
 
-        match sendgrid.send_mail("subject text", "body content") {
+        match sendgrid.send("subject text", "body content") {
             Ok(_) => println!("Email sent successfully"),
             Err(err) => println!("Error sending email: {}", err),
         }
