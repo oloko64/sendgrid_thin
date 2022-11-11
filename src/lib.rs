@@ -13,19 +13,22 @@ pub enum ContentType {
 
 #[derive(Debug, PartialEq, Eq)]
 pub struct Sendgrid<'a> {
+    api_key: &'a str,
     to_email: &'a str,
     from_email: &'a str,
-    api_key: &'a str,
+    cc_emails: Option<Vec<&'a str>>,
     content_type: Option<&'a str>,
 }
 
 impl<'a> Sendgrid<'a> {
+    #[must_use]
     /// Create a new sendgrid instance.
     pub fn new(api_key: &'a str, to_email: &'a str, from_email: &'a str) -> Self {
         Self {
             api_key,
             to_email,
             from_email,
+            cc_emails: None,
             content_type: None,
         }
     }
@@ -48,6 +51,26 @@ impl<'a> Sendgrid<'a> {
         Ok(())
     }
 
+    /// Add a CC email to the email.
+    /// 
+    /// Allow to send the email to multiple recipients.
+    /// # Example
+    /// ```
+    /// use sendgrid_thin::Sendgrid;
+    /// let mut sendgrid = Sendgrid::new("SENDGRID_API_KEY", "to_email@example.com", "from_email@example.com");
+    /// sendgrid.add_cc_emails(&["cc_email1@example.com", "cc_email2@example.com"]);
+    /// match sendgrid.send_mail("subject", "body") {
+    ///    Ok(_) => println!("Email sent successfully"),
+    ///    Err(err) => println!("Error sending email: {}", err),
+    /// }
+    /// ```
+    pub fn add_cc_emails(&mut self, cc_emails: &[&'a str]) {
+        match self.cc_emails.as_mut() {
+            Some(cc) => cc.extend(cc_emails),
+            None => self.cc_emails = Some(cc_emails.to_vec()),
+        }
+    }
+
     /// Set the content type of the email.
     /// # Example
     /// ```
@@ -64,7 +87,17 @@ impl<'a> Sendgrid<'a> {
 
     fn set_body_email(&self, subject: &str, body: &str) -> String {
         let content_type = self.content_type.unwrap_or("text/plain");
-        format!("{{\"personalizations\": [{{\"to\": [{{\"email\": \"{}\"}}], \"subject\": \"{}\"}}], \"from\": {{\"email\": \"{}\"}}, \"content\": [{{\"type\": \"{}\", \"value\": \"{}\"}}]}}", self.to_email, subject, self.from_email, content_type , body)
+        let cc_emails = match self.cc_emails.as_ref().map(|cc_emails| {
+            cc_emails
+                .iter()
+                .map(|cc_email| format!("{{\"email\": \"{}\"}}", cc_email))
+                .collect::<Vec<String>>()
+                .join(", ")
+        }) {
+            Some(cc_emails) => format!(", \"cc\": [{}]", cc_emails),
+            None => String::new(),
+        };
+        format!("{{\"personalizations\": [{{\"to\": [{{\"email\": \"{}\"}}]{}, \"subject\": \"{}\"}}], \"from\": {{\"email\": \"{}\"}}, \"content\": [{{\"type\": \"{}\", \"value\": \"{}\"}}]}}", self.to_email, cc_emails, subject, self.from_email, content_type , body)
     }
 }
 
@@ -85,6 +118,7 @@ mod tests {
                 api_key: "SENDGRID_API_KEY",
                 to_email: "to_email@example.com",
                 from_email: "from_email@example.com",
+                cc_emails: None,
                 content_type: None,
             }
         );
@@ -112,5 +146,16 @@ mod tests {
             "from_email@example.com",
         );
         assert_eq!(sendgrid.set_body_email("subject_test", "body_test"), "{\"personalizations\": [{\"to\": [{\"email\": \"to_email@example.com\"}], \"subject\": \"subject_test\"}], \"from\": {\"email\": \"from_email@example.com\"}, \"content\": [{\"type\": \"text/plain\", \"value\": \"body_test\"}]}");
+    }
+
+    #[test]
+    fn test_set_body_email_with_cc_emails() {
+        let mut sendgrid = Sendgrid::new(
+            "SENDGRID_API_KEY",
+            "to_email@example.com",
+            "from_email@example.com",
+        );
+        sendgrid.add_cc_emails(&["cc_email1@example.com", "cc_email2@example.com"]);
+        assert_eq!(sendgrid.set_body_email("subject_test", "body_test"), "{\"personalizations\": [{\"to\": [{\"email\": \"to_email@example.com\"}], \"cc\": [{\"email\": \"cc_email1@example.com\"}, {\"email\": \"cc_email2@example.com\"}], \"subject\": \"subject_test\"}], \"from\": {\"email\": \"from_email@example.com\"}, \"content\": [{\"type\": \"text/plain\", \"value\": \"body_test\"}]}");
     }
 }
