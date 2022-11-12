@@ -114,12 +114,12 @@ impl<'a> SendgridEmail<'a> {
     ///    Err(err) => println!("Error sending email: {}", err),
     /// }
     /// ```
-    pub fn add_cc_emails(&mut self, cc_emails: &[&'a str]) {
+    pub fn add_cc_emails<T: AsRef<str>>(&mut self, cc_emails: &[T]) {
         match self.personalizations[0].cc.as_mut() {
             Some(cc) => {
                 for email in cc_emails {
                     cc.push(From {
-                        email: (*email).to_owned(),
+                        email: (*email).as_ref().to_owned(),
                     });
                 }
             }
@@ -128,7 +128,7 @@ impl<'a> SendgridEmail<'a> {
                     cc_emails
                         .iter()
                         .map(|email| From {
-                            email: (*email).to_owned(),
+                            email: (*email).as_ref().to_owned(),
                         })
                         .collect(),
                 );
