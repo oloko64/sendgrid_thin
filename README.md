@@ -15,7 +15,7 @@ I recommend the [dotenvy](https://crates.io/crates/dotenvy) crate to load the AP
 ## Usage
 
 ```rust
-     use sendgrid_thin::Sendgrid;
+     use sendgrid_thin::{SendgridEmail, ContentType};
 
      fn main() {
         let mut sendgrid = SendgridEmail::new("SENDGRID_API_KEY", "to_email@example.com", "from_email@example.com");
