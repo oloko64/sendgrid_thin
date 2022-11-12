@@ -378,16 +378,13 @@ impl<'a> Sendgrid<'a> {
                 .as_secs()
                 < send_at
             {
-                Ok(format!(
+                return Ok(format!(
                     "Email successfully scheduled to be sent at {}.",
                     send_at
-                ))
-            } else {
-                Ok("Email successfully sent.".to_owned())
+                ));
             }
-        } else {
-            Ok("Email sent successfully.".to_owned())
         }
+        Ok("Email sent successfully.".to_owned())
     }
 }
 
