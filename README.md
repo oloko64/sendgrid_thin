@@ -15,11 +15,12 @@ I recommend the [dotenvy](https://crates.io/crates/dotenvy) crate to load the AP
 ## Usage
 
 ```rust
-     use sendgrid_thin::{SendgridEmail, ContentType};
+     use sendgrid_thin::{Sendgrid, ContentType};
 
      fn main() {
-        let mut sendgrid = SendgridEmail::new("SENDGRID_API_KEY", "to_email@example.com", "from_email@example.com");
+        let mut sendgrid = Sendgrid::new("SENDGRID_API_KEY", "to_email@example.com", "from_email@example.com");
         sendgrid.set_content_type(ContentType::Html);
+        sendgrid.set_send_at(1668271500);
         sendgrid.add_cc_emails(&["cc_email1@example.com", "cc_email2@example.com"]);
 
         match sendgrid.send("subject text", "body content") {
