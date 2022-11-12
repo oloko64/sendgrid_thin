@@ -63,7 +63,11 @@ pub struct Personalization {
 impl<'a> SendgridEmail<'a> {
     #[must_use]
     /// Create a new sendgrid instance.
-    pub fn new<T: AsRef<str>>(api_key: T, to_email: T, from_email: T) -> Self {
+    pub fn new<T: AsRef<str>, U: AsRef<str>, V: AsRef<str>>(
+        api_key: T,
+        to_email: U,
+        from_email: V,
+    ) -> Self {
         Self {
             api_key: api_key.as_ref().to_owned(),
             personalizations: [Personalization {
@@ -93,7 +97,11 @@ impl<'a> SendgridEmail<'a> {
     ///    Err(err) => println!("Error sending email: {}", err),
     /// }
     /// ```
-    pub fn send<T: AsRef<str>>(&mut self, subject: T, body: T) -> Result<(), Box<dyn Error>> {
+    pub fn send<T: AsRef<str>, U: AsRef<str>>(
+        &mut self,
+        subject: T,
+        body: U,
+    ) -> Result<(), Box<dyn Error>> {
         ureq::post("https://api.sendgrid.com/v3/mail/send")
             .set("Authorization", &format!("Bearer {}", self.api_key))
             .set("Content-Type", "application/json")
