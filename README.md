@@ -1,6 +1,6 @@
 # sendgrid_thin
 
-[![Coverage](https://github.com/OLoKo64/sendgrid_thin/actions/workflows/rust-workflow.yml/badge.svg?branch=main)](https://github.com/OLoKo64/sendgrid_thin/actions/workflows/rust-workflow.yml)
+[![Tests](https://github.com/OLoKo64/sendgrid_thin/actions/workflows/rust-workflow.yml/badge.svg)](https://github.com/OLoKo64/sendgrid_thin/actions/workflows/rust-workflow.yml)
 
 A thin wrapper around the SendGrid V3 API.
 
