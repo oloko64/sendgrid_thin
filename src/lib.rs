@@ -66,7 +66,7 @@ impl<'a> SendgridEmailFirstItem<'a> for SendgridEmail<'a> {
 }
 
 #[derive(Debug, Serialize, PartialEq, Eq)]
-pub struct Content<'a> {
+struct Content<'a> {
     #[serde(rename = "type")]
     content_type: Option<&'a str>,
 
@@ -75,13 +75,13 @@ pub struct Content<'a> {
 }
 
 #[derive(Debug, Serialize, PartialEq, Eq)]
-pub struct From {
+struct From {
     #[serde(rename = "email")]
     email: Option<String>,
 }
 
 #[derive(Debug, Serialize, PartialEq, Eq)]
-pub struct Personalization {
+struct Personalization {
     #[serde(rename = "to")]
     to: Vec<From>,
 
@@ -120,8 +120,8 @@ impl<'a> Sendgrid<'a> {
     ///    Err(err) => println!("Error sending email: {}", err),
     /// }
     /// ```
-    pub fn new<T: AsRef<str>>(api_key: T) -> Self {
-        Self {
+    pub fn new<T: AsRef<str>>(api_key: T) -> Sendgrid<'a> {
+        Sendgrid {
             api_key: api_key.as_ref().to_owned(),
             sendgrid_email: SendgridEmail {
                 personalizations: [Personalization {
@@ -157,7 +157,7 @@ impl<'a> Sendgrid<'a> {
     ///    Err(err) => println!("Error sending email: {}", err),
     /// }
     /// ```
-    pub fn set_to_emails<T: AsRef<str>>(&mut self, to_email: &[T]) -> &mut Self {
+    pub fn set_to_emails<T: AsRef<str>>(&mut self, to_email: &[T]) -> &mut Sendgrid<'a> {
         self.sendgrid_email.get_first_personalization().to = to_email
             .iter()
             .map(|email| From {
@@ -185,7 +185,7 @@ impl<'a> Sendgrid<'a> {
     ///    Err(err) => println!("Error sending email: {}", err),
     /// }
     /// ```
-    pub fn set_from_email<T: AsRef<str>>(&mut self, from_email: T) -> &mut Self {
+    pub fn set_from_email<T: AsRef<str>>(&mut self, from_email: T) -> &mut Sendgrid<'a> {
         self.sendgrid_email.from.email = Some(from_email.as_ref().to_owned());
         self
     }
@@ -208,7 +208,7 @@ impl<'a> Sendgrid<'a> {
     ///    Err(err) => println!("Error sending email: {}", err),
     /// }
     /// ```
-    pub fn set_subject<T: AsRef<str>>(&mut self, subject: T) -> &mut Self {
+    pub fn set_subject<T: AsRef<str>>(&mut self, subject: T) -> &mut Sendgrid<'a> {
         self.sendgrid_email.subject = Some(subject.as_ref().to_owned());
         self
     }
@@ -231,7 +231,7 @@ impl<'a> Sendgrid<'a> {
     ///    Err(err) => println!("Error sending email: {}", err),
     /// }
     /// ```
-    pub fn set_body<T: AsRef<str>>(&mut self, body: T) -> &mut Self {
+    pub fn set_body<T: AsRef<str>>(&mut self, body: T) -> &mut Sendgrid<'a> {
         self.sendgrid_email.get_first_content().value = Some(body.as_ref().to_owned());
         self
     }
@@ -257,7 +257,7 @@ impl<'a> Sendgrid<'a> {
     ///    Err(err) => println!("Error sending email: {}", err),
     /// }
     /// ```
-    pub fn set_cc_emails<T: AsRef<str>>(&mut self, cc_emails: &[T]) -> &mut Self {
+    pub fn set_cc_emails<T: AsRef<str>>(&mut self, cc_emails: &[T]) -> &mut Sendgrid<'a> {
         self.sendgrid_email.get_first_personalization().cc = Some(
             cc_emails
                 .iter()
@@ -288,7 +288,10 @@ impl<'a> Sendgrid<'a> {
     ///    Err(err) => println!("Error sending email: {}", err),
     /// }
     /// ```
-    pub fn set_content_type<T: AsRef<ContentType>>(&mut self, content_type: T) -> &mut Self {
+    pub fn set_content_type<T: AsRef<ContentType>>(
+        &mut self,
+        content_type: T,
+    ) -> &mut Sendgrid<'a> {
         self.sendgrid_email.get_first_content().content_type = match content_type.as_ref() {
             ContentType::Text => Some("text/plain"),
             ContentType::Html => Some("text/html"),
@@ -315,7 +318,7 @@ impl<'a> Sendgrid<'a> {
     ///    Err(err) => println!("Error sending email: {}", err),
     /// }
     /// ```
-    pub fn set_send_at(&mut self, send_at: u64) -> &mut Self {
+    pub fn set_send_at(&mut self, send_at: u64) -> &mut Sendgrid<'a> {
         self.sendgrid_email.send_at = Some(send_at);
         self
     }
