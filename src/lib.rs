@@ -89,6 +89,12 @@ pub struct Personalization {
     cc: Option<Vec<From>>,
 }
 
+impl Personalization {
+    fn get_first_to(&mut self) -> &mut From {
+        &mut *self.to.first_mut().expect("Failed to get to at index 0")
+    }
+}
+
 impl<'a> Sendgrid<'a> {
     #[must_use = "Sendgrid::new() returns a Sendgrid instance"]
     /// Create a new sendgrid instance.
@@ -324,6 +330,22 @@ impl<'a> Sendgrid<'a> {
             return Err(
                 "Email subject is required. Use set_subject() to set the subject of the email."
                     .into(),
+            );
+        };
+        if self
+            .sendgrid_email
+            .get_first_personalization()
+            .get_first_to()
+            .email
+            .is_none()
+        {
+            return Err(
+                "Email to is required. Use set_to_emails() to set the to of the email.".into(),
+            );
+        };
+        if self.sendgrid_email.from.email.is_none() {
+            return Err(
+                "Email from is required. Use set_from_email() to set the from of the email.".into(),
             );
         };
         Ok(())
