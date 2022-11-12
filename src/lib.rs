@@ -33,7 +33,7 @@ pub struct SendgridEmail<'a> {
     subject: Option<String>,
 
     #[serde(rename = "content")]
-    content: Vec<Content<'a>>,
+    content: [Content<'a>; 1],
 }
 
 #[derive(Debug, Serialize, PartialEq, Eq)]
@@ -76,7 +76,7 @@ impl<'a> SendgridEmail<'a> {
                 email: from_email.as_ref().to_owned(),
             },
             subject: None,
-            content: vec![Content {
+            content: [Content {
                 content_type: None,
                 value: None,
             }],
@@ -185,7 +185,7 @@ mod tests {
                     email: "from_email@example.com".to_owned()
                 },
                 subject: None,
-                content: vec![Content {
+                content: [Content {
                     content_type: None,
                     value: None,
                 }],
