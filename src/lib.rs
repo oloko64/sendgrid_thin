@@ -1,7 +1,6 @@
 use serde::Serialize;
 use std::error::Error;
 
-#[derive(Clone)]
 /// The content type of the email.
 /// # Example
 /// ```
@@ -25,7 +24,7 @@ pub struct SendgridEmail<'a> {
     api_key: String,
 
     #[serde(rename = "personalizations")]
-    personalizations: Vec<Personalization>,
+    personalizations: [Personalization; 1],
 
     #[serde(rename = "from")]
     from: From,
@@ -67,7 +66,7 @@ impl<'a> SendgridEmail<'a> {
     pub fn new<T: AsRef<str>>(api_key: T, to_email: T, from_email: T) -> Self {
         Self {
             api_key: api_key.as_ref().to_owned(),
-            personalizations: vec![Personalization {
+            personalizations: [Personalization {
                 to: vec![From {
                     email: to_email.as_ref().to_owned(),
                 }],
@@ -120,7 +119,7 @@ impl<'a> SendgridEmail<'a> {
             Some(cc) => {
                 for email in cc_emails {
                     cc.push(From {
-                        email: (*email).to_string(),
+                        email: (*email).to_owned(),
                     });
                 }
             }
@@ -129,7 +128,7 @@ impl<'a> SendgridEmail<'a> {
                     cc_emails
                         .iter()
                         .map(|email| From {
-                            email: (*email).to_string(),
+                            email: (*email).to_owned(),
                         })
                         .collect(),
                 );
@@ -155,8 +154,8 @@ impl<'a> SendgridEmail<'a> {
         if self.content[0].content_type.is_none() {
             self.content[0].content_type = Some("text/plain");
         }
-        self.subject = Some(subject.to_string());
-        self.content[0].value = Some(body.to_string());
+        self.subject = Some(subject.to_owned());
+        self.content[0].value = Some(body.to_owned());
         serde_json::to_string(self).expect("Error serializing email")
     }
 }
@@ -175,15 +174,15 @@ mod tests {
         assert_eq!(
             sendgrid,
             SendgridEmail {
-                api_key: "SENDGRID_API_KEY".to_string(),
-                personalizations: vec![Personalization {
+                api_key: "SENDGRID_API_KEY".to_owned(),
+                personalizations: [Personalization {
                     to: vec![From {
-                        email: "to_email@example.com".to_string()
+                        email: "to_email@example.com".to_owned()
                     }],
                     cc: None,
                 }],
                 from: From {
-                    email: "from_email@example.com".to_string()
+                    email: "from_email@example.com".to_owned()
                 },
                 subject: None,
                 content: vec![Content {
