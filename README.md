@@ -18,13 +18,24 @@ I recommend the [dotenvy](https://crates.io/crates/dotenvy) crate to load the AP
      use sendgrid_thin::{Sendgrid, ContentType};
 
      fn main() {
-        let mut sendgrid = Sendgrid::new("SENDGRID_API_KEY", "to_email@example.com", "from_email@example.com");
-        sendgrid.set_content_type(ContentType::Html);
-        sendgrid.set_send_at(1668271500);
-        sendgrid.add_cc_emails(&["cc_email1@example.com", "cc_email2@example.com"]);
+        let mut sendgrid = Sendgrid::new("SENDGRID_API_KEY");
 
-        match sendgrid.send("subject text", "body content") {
-            Ok(_) => println!("Email sent successfully"),
+        // Required
+        sendgrid
+            .set_to_emails(&["to_email_1@example.com", "to_email_2@example.com"])
+            .set_from_email("from_email@example.com")
+            .set_subject("subject of email")
+            .set_body("body of email");
+
+        // Optional
+        sendgrid
+            .set_content_type(ContentType::Html)
+            .set_send_at(1668281500)
+            .set_cc_emails(&["cc_email_1@example.com", "cc_email_2@example.com"]);
+
+        // Send the email
+        match sendgrid.send() {
+            Ok(message) => println!("{}", message),
             Err(err) => println!("Error sending email: {}", err),
         }
      }
