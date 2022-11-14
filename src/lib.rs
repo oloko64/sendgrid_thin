@@ -1,8 +1,6 @@
+use anyhow::{bail, Result};
 use serde::Serialize;
-use std::{
-    error::Error,
-    time::{SystemTime, UNIX_EPOCH},
-};
+use std::time::{SystemTime, UNIX_EPOCH};
 
 /// The content type of the email.
 /// # Example
@@ -338,17 +336,12 @@ impl<'a> Sendgrid<'a> {
         self
     }
 
-    fn check_required_parameters(&mut self) -> Result<(), Box<dyn Error>> {
+    fn check_required_parameters(&mut self) -> Result<()> {
         if self.sendgrid_email.get_first_content().value.is_none() {
-            return Err(
-                "Email body is required. Use set_body() to set the body of the email.".into(),
-            );
+            bail!("Email body is required. Use set_body() to set the body of the email.");
         }
         if self.sendgrid_email.subject.is_none() {
-            return Err(
-                "Email subject is required. Use set_subject() to set the subject of the email."
-                    .into(),
-            );
+            bail!("Email subject is required. Use set_subject() to set the subject of the email.");
         };
         if self
             .sendgrid_email
@@ -357,14 +350,10 @@ impl<'a> Sendgrid<'a> {
             .email
             .is_none()
         {
-            return Err(
-                "Email to is required. Use set_to_emails() to set the to of the email.".into(),
-            );
+            bail!("Email to is required. Use set_to_emails() to set the to of the email.");
         };
         if self.sendgrid_email.from.email.is_none() {
-            return Err(
-                "Email from is required. Use set_from_email() to set the from of the email.".into(),
-            );
+            bail!("Email from is required. Use set_from_email() to set the from of the email.");
         };
         Ok(())
     }
@@ -392,7 +381,7 @@ impl<'a> Sendgrid<'a> {
     ///    Err(err) => println!("Error sending email: {}", err),
     /// }
     /// ```
-    pub fn send(&mut self) -> Result<String, Box<dyn Error>> {
+    pub fn send(&mut self) -> Result<String> {
         if self
             .sendgrid_email
             .get_first_content()
