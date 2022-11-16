@@ -24,7 +24,8 @@ pub struct Sendgrid<'a> {
     sendgrid_email: SendgridEmail<'a>,
 }
 
-#[derive(Debug, Serialize, PartialEq, Eq)]
+#[derive(Serialize)]
+#[cfg_attr(test, derive(Debug, PartialEq, Eq))]
 struct SendgridEmail<'a> {
     #[serde(rename = "personalizations")]
     personalizations: [Personalization; 1],
@@ -63,7 +64,8 @@ impl<'a> SendgridEmailFirstItem<'a> for SendgridEmail<'a> {
     }
 }
 
-#[derive(Debug, Serialize, PartialEq, Eq)]
+#[derive(Serialize)]
+#[cfg_attr(test, derive(Debug, PartialEq, Eq))]
 struct Content<'a> {
     #[serde(rename = "type")]
     content_type: Option<&'a str>,
@@ -72,13 +74,15 @@ struct Content<'a> {
     value: Option<String>,
 }
 
-#[derive(Debug, Serialize, PartialEq, Eq)]
+#[derive(Serialize)]
+#[cfg_attr(test, derive(Debug, PartialEq, Eq))]
 struct From {
     #[serde(rename = "email")]
     email: Option<String>,
 }
 
-#[derive(Debug, Serialize, PartialEq, Eq)]
+#[derive(Serialize)]
+#[cfg_attr(test, derive(Debug, PartialEq, Eq))]
 struct Personalization {
     #[serde(rename = "to")]
     to: Vec<From>,
@@ -94,7 +98,6 @@ impl Personalization {
 }
 
 impl<'a> Sendgrid<'a> {
-    #[must_use = "Sendgrid::new() returns a Sendgrid instance"]
     /// Create a new sendgrid instance.
     /// # Example
     /// ```
@@ -118,7 +121,11 @@ impl<'a> Sendgrid<'a> {
     ///    Err(err) => println!("Error sending email: {}", err),
     /// }
     /// ```
-    pub fn new<T: AsRef<str>>(api_key: T) -> Sendgrid<'a> {
+    #[must_use = "Sendgrid::new() returns a Sendgrid instance"]
+    pub fn new<T>(api_key: T) -> Sendgrid<'a>
+    where
+        T: AsRef<str>,
+    {
         Sendgrid {
             api_key: api_key.as_ref().to_owned(),
             sendgrid_email: SendgridEmail {
