@@ -122,15 +122,12 @@ impl<'a> Sendgrid<'a> {
     /// }
     /// ```
     #[must_use = "Sendgrid::new() returns a Sendgrid instance"]
-    pub fn new<T>(api_key: T) -> Sendgrid<'a>
-    where
-        T: AsRef<str>,
-    {
+    pub fn new(api_key: impl Into<String>) -> Sendgrid<'a> {
         Sendgrid {
-            api_key: api_key.as_ref().to_owned(),
+            api_key: api_key.into(),
             sendgrid_email: SendgridEmail {
                 personalizations: [Personalization {
-                    to: vec![From { email: None }],
+                    to: Vec::from([From { email: None }]),
                     cc: None,
                 }],
                 from: From { email: None },
@@ -162,12 +159,12 @@ impl<'a> Sendgrid<'a> {
     ///    Err(err) => println!("Error sending email: {}", err),
     /// }
     /// ```
-    pub fn set_to_emails<T>(&mut self, to_email: &[T]) -> &mut Sendgrid<'a>
+    pub fn set_to_emails<T>(&mut self, to_email: impl IntoIterator<Item = T>) -> &mut Sendgrid<'a>
     where
         T: AsRef<str>,
     {
         self.sendgrid_email.get_first_personalization().to = to_email
-            .iter()
+            .into_iter()
             .map(|email| From {
                 email: Some(email.as_ref().to_owned()),
             })
@@ -193,11 +190,8 @@ impl<'a> Sendgrid<'a> {
     ///    Err(err) => println!("Error sending email: {}", err),
     /// }
     /// ```
-    pub fn set_from_email<T>(&mut self, from_email: T) -> &mut Sendgrid<'a>
-    where
-        T: AsRef<str>,
-    {
-        self.sendgrid_email.from.email = Some(from_email.as_ref().to_owned());
+    pub fn set_from_email(&mut self, from_email: impl Into<String>) -> &mut Sendgrid<'a> {
+        self.sendgrid_email.from.email = Some(from_email.into());
         self
     }
 
@@ -219,11 +213,8 @@ impl<'a> Sendgrid<'a> {
     ///    Err(err) => println!("Error sending email: {}", err),
     /// }
     /// ```
-    pub fn set_subject<T>(&mut self, subject: T) -> &mut Sendgrid<'a>
-    where
-        T: AsRef<str>,
-    {
-        self.sendgrid_email.subject = Some(subject.as_ref().to_owned());
+    pub fn set_subject(&mut self, subject: impl Into<String>) -> &mut Sendgrid<'a> {
+        self.sendgrid_email.subject = Some(subject.into());
         self
     }
 
@@ -245,11 +236,8 @@ impl<'a> Sendgrid<'a> {
     ///    Err(err) => println!("Error sending email: {}", err),
     /// }
     /// ```
-    pub fn set_body<T>(&mut self, body: T) -> &mut Sendgrid<'a>
-    where
-        T: AsRef<str>,
-    {
-        self.sendgrid_email.get_first_content().value = Some(body.as_ref().to_owned());
+    pub fn set_body(&mut self, body: impl Into<String>) -> &mut Sendgrid<'a> {
+        self.sendgrid_email.get_first_content().value = Some(body.into());
         self
     }
 
@@ -274,15 +262,15 @@ impl<'a> Sendgrid<'a> {
     ///    Err(err) => println!("Error sending email: {}", err),
     /// }
     /// ```
-    pub fn set_cc_emails<T>(&mut self, cc_emails: &[T]) -> &mut Sendgrid<'a>
+    pub fn set_cc_emails<T>(&mut self, cc_emails: impl IntoIterator<Item = T>) -> &mut Sendgrid<'a>
     where
         T: AsRef<str>,
     {
         self.sendgrid_email.get_first_personalization().cc = Some(
             cc_emails
-                .iter()
+                .into_iter()
                 .map(|email| From {
-                    email: Some((*email).as_ref().to_owned()),
+                    email: Some(email.as_ref().to_owned()),
                 })
                 .collect(),
         );
@@ -435,7 +423,7 @@ mod tests {
             sendgrid.sendgrid_email,
             SendgridEmail {
                 personalizations: [Personalization {
-                    to: vec![From { email: None }],
+                    to: Vec::from([From { email: None }]),
                     cc: None,
                 }],
                 from: From { email: None },
