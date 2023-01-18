@@ -43,6 +43,24 @@ struct SendgridEmail<'a> {
     send_at: Option<u64>,
 }
 
+impl<'a> Default for SendgridEmail<'a> {
+    fn default() -> Self {
+        SendgridEmail {
+            personalizations: [Personalization {
+                to: Vec::from([From { email: None }]),
+                cc: None,
+            }],
+            from: From { email: None },
+            subject: None,
+            content: [Content {
+                content_type: Some("text/plain"),
+                value: None,
+            }],
+            send_at: None,
+        }
+    }
+}
+
 trait SendgridEmailFirstItem<'a> {
     fn get_first_personalization(&mut self) -> &mut Personalization;
     fn get_first_content(&mut self) -> &mut Content<'a>;
@@ -125,19 +143,7 @@ impl<'a> Sendgrid<'a> {
     pub fn new(api_key: impl Into<String>) -> Sendgrid<'a> {
         Sendgrid {
             api_key: api_key.into(),
-            sendgrid_email: SendgridEmail {
-                personalizations: [Personalization {
-                    to: Vec::from([From { email: None }]),
-                    cc: None,
-                }],
-                from: From { email: None },
-                subject: None,
-                content: [Content {
-                    content_type: None,
-                    value: None,
-                }],
-                send_at: None,
-            },
+            sendgrid_email: SendgridEmail::default(),
         }
     }
 
@@ -377,15 +383,6 @@ impl<'a> Sendgrid<'a> {
     /// }
     /// ```
     pub fn send(&mut self) -> Result<String> {
-        if self
-            .sendgrid_email
-            .get_first_content()
-            .content_type
-            .is_none()
-        {
-            self.sendgrid_email.get_first_content().content_type = Some("text/plain");
-        }
-
         self.check_required_parameters()?;
 
         ureq::post("https://api.sendgrid.com/v3/mail/send")
@@ -429,7 +426,7 @@ mod tests {
                 from: From { email: None },
                 subject: None,
                 content: [Content {
-                    content_type: None,
+                    content_type: Some("text/plain"),
                     value: None,
                 }],
                 send_at: None,
@@ -442,7 +439,7 @@ mod tests {
         let mut sendgrid = Sendgrid::new("SENDGRID_API_KEY");
         assert_eq!(
             sendgrid.sendgrid_email.get_first_content().content_type,
-            None
+            Some("text/plain")
         );
         sendgrid.set_content_type(ContentType::Html);
         assert_eq!(
