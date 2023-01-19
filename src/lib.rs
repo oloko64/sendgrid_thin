@@ -13,20 +13,23 @@ pub enum ContentType {
     Html,
 }
 
-impl AsRef<ContentType> for ContentType {
-    fn as_ref(&self) -> &ContentType {
-        self
-    }
+pub struct Sendgrid {
+    api_key: String,
+    sendgrid_email: SendgridEmail,
 }
 
-pub struct Sendgrid<'a> {
-    api_key: String,
-    sendgrid_email: SendgridEmail<'a>,
+impl Default for Sendgrid {
+    fn default() -> Self {
+        Sendgrid {
+            api_key: String::from(""),
+            sendgrid_email: SendgridEmail::default(),
+        }
+    }
 }
 
 #[derive(Serialize)]
 #[cfg_attr(test, derive(Debug, PartialEq, Eq))]
-struct SendgridEmail<'a> {
+struct SendgridEmail {
     #[serde(rename = "personalizations")]
     personalizations: [Personalization; 1],
 
@@ -37,13 +40,13 @@ struct SendgridEmail<'a> {
     subject: Option<String>,
 
     #[serde(rename = "content")]
-    content: [Content<'a>; 1],
+    content: [Content; 1],
 
     #[serde(rename = "send_at", skip_serializing_if = "Option::is_none")]
     send_at: Option<u64>,
 }
 
-impl<'a> Default for SendgridEmail<'a> {
+impl Default for SendgridEmail {
     fn default() -> Self {
         SendgridEmail {
             personalizations: [Personalization {
@@ -53,7 +56,7 @@ impl<'a> Default for SendgridEmail<'a> {
             from: From { email: None },
             subject: None,
             content: [Content {
-                content_type: Some("text/plain"),
+                content_type: Some(String::from("text/plain")),
                 value: None,
             }],
             send_at: None,
@@ -61,12 +64,12 @@ impl<'a> Default for SendgridEmail<'a> {
     }
 }
 
-trait SendgridEmailFirstItem<'a> {
+trait SendgridEmailFirstItem {
     fn get_first_personalization(&mut self) -> &mut Personalization;
-    fn get_first_content(&mut self) -> &mut Content<'a>;
+    fn get_first_content(&mut self) -> &mut Content;
 }
 
-impl<'a> SendgridEmailFirstItem<'a> for SendgridEmail<'a> {
+impl SendgridEmailFirstItem for SendgridEmail {
     fn get_first_personalization(&mut self) -> &mut Personalization {
         &mut *self
             .personalizations
@@ -74,7 +77,7 @@ impl<'a> SendgridEmailFirstItem<'a> for SendgridEmail<'a> {
             .expect("Failed to get personalizations at index 0")
     }
 
-    fn get_first_content(&mut self) -> &mut Content<'a> {
+    fn get_first_content(&mut self) -> &mut Content {
         &mut *self
             .content
             .first_mut()
@@ -84,9 +87,9 @@ impl<'a> SendgridEmailFirstItem<'a> for SendgridEmail<'a> {
 
 #[derive(Serialize)]
 #[cfg_attr(test, derive(Debug, PartialEq, Eq))]
-struct Content<'a> {
+struct Content {
     #[serde(rename = "type")]
-    content_type: Option<&'a str>,
+    content_type: Option<String>,
 
     #[serde(rename = "value")]
     value: Option<String>,
@@ -115,7 +118,7 @@ impl Personalization {
     }
 }
 
-impl<'a> Sendgrid<'a> {
+impl Sendgrid {
     /// Create a new sendgrid instance.
     /// # Example
     /// ```
@@ -140,10 +143,10 @@ impl<'a> Sendgrid<'a> {
     /// }
     /// ```
     #[must_use = "Sendgrid::new() returns a Sendgrid instance"]
-    pub fn new(api_key: impl Into<String>) -> Sendgrid<'a> {
-        Sendgrid {
+    pub fn new(api_key: impl Into<String>) -> Sendgrid {
+        Self {
             api_key: api_key.into(),
-            sendgrid_email: SendgridEmail::default(),
+            ..Default::default()
         }
     }
 
@@ -165,7 +168,7 @@ impl<'a> Sendgrid<'a> {
     ///    Err(err) => println!("Error sending email: {}", err),
     /// }
     /// ```
-    pub fn set_to_emails<T>(&mut self, to_email: impl IntoIterator<Item = T>) -> &mut Sendgrid<'a>
+    pub fn set_to_emails<T>(&mut self, to_email: impl IntoIterator<Item = T>) -> &mut Sendgrid
     where
         T: AsRef<str>,
     {
@@ -196,7 +199,7 @@ impl<'a> Sendgrid<'a> {
     ///    Err(err) => println!("Error sending email: {}", err),
     /// }
     /// ```
-    pub fn set_from_email(&mut self, from_email: impl Into<String>) -> &mut Sendgrid<'a> {
+    pub fn set_from_email(&mut self, from_email: impl Into<String>) -> &mut Sendgrid {
         self.sendgrid_email.from.email = Some(from_email.into());
         self
     }
@@ -219,7 +222,7 @@ impl<'a> Sendgrid<'a> {
     ///    Err(err) => println!("Error sending email: {}", err),
     /// }
     /// ```
-    pub fn set_subject(&mut self, subject: impl Into<String>) -> &mut Sendgrid<'a> {
+    pub fn set_subject(&mut self, subject: impl Into<String>) -> &mut Sendgrid {
         self.sendgrid_email.subject = Some(subject.into());
         self
     }
@@ -242,7 +245,7 @@ impl<'a> Sendgrid<'a> {
     ///    Err(err) => println!("Error sending email: {}", err),
     /// }
     /// ```
-    pub fn set_body(&mut self, body: impl Into<String>) -> &mut Sendgrid<'a> {
+    pub fn set_body(&mut self, body: impl Into<String>) -> &mut Sendgrid {
         self.sendgrid_email.get_first_content().value = Some(body.into());
         self
     }
@@ -268,7 +271,7 @@ impl<'a> Sendgrid<'a> {
     ///    Err(err) => println!("Error sending email: {}", err),
     /// }
     /// ```
-    pub fn set_cc_emails<T>(&mut self, cc_emails: impl IntoIterator<Item = T>) -> &mut Sendgrid<'a>
+    pub fn set_cc_emails<T>(&mut self, cc_emails: impl IntoIterator<Item = T>) -> &mut Sendgrid
     where
         T: AsRef<str>,
     {
@@ -302,13 +305,10 @@ impl<'a> Sendgrid<'a> {
     ///    Err(err) => println!("Error sending email: {}", err),
     /// }
     /// ```
-    pub fn set_content_type<T>(&mut self, content_type: T) -> &mut Sendgrid<'a>
-    where
-        T: AsRef<ContentType>,
-    {
-        self.sendgrid_email.get_first_content().content_type = match content_type.as_ref() {
-            ContentType::Text => Some("text/plain"),
-            ContentType::Html => Some("text/html"),
+    pub fn set_content_type(&mut self, content_type: ContentType) -> &mut Sendgrid {
+        self.sendgrid_email.get_first_content().content_type = match content_type {
+            ContentType::Text => Some(String::from("text/plain")),
+            ContentType::Html => Some(String::from("text/html")),
         };
         self
     }
@@ -332,7 +332,7 @@ impl<'a> Sendgrid<'a> {
     ///    Err(err) => println!("Error sending email: {}", err),
     /// }
     /// ```
-    pub fn set_send_at(&mut self, send_at: u64) -> &mut Sendgrid<'a> {
+    pub fn set_send_at(&mut self, send_at: u64) -> &mut Sendgrid {
         self.sendgrid_email.send_at = Some(send_at);
         self
     }
@@ -393,12 +393,11 @@ impl<'a> Sendgrid<'a> {
             )?;
 
         if let Some(send_at) = self.sendgrid_email.send_at {
-            if SystemTime::now()
+            let current_time = SystemTime::now()
                 .duration_since(UNIX_EPOCH)
                 .expect("Error getting current time")
-                .as_secs()
-                < send_at
-            {
+                .as_secs();
+            if current_time < send_at {
                 return Ok(format!(
                     "Email successfully scheduled to be sent at {}.",
                     send_at
@@ -426,7 +425,7 @@ mod tests {
                 from: From { email: None },
                 subject: None,
                 content: [Content {
-                    content_type: Some("text/plain"),
+                    content_type: Some(String::from("text/plain")),
                     value: None,
                 }],
                 send_at: None,
@@ -439,17 +438,17 @@ mod tests {
         let mut sendgrid = Sendgrid::new("SENDGRID_API_KEY");
         assert_eq!(
             sendgrid.sendgrid_email.get_first_content().content_type,
-            Some("text/plain")
+            Some(String::from("text/plain"))
         );
         sendgrid.set_content_type(ContentType::Html);
         assert_eq!(
             sendgrid.sendgrid_email.get_first_content().content_type,
-            Some("text/html")
+            Some(String::from("text/html"))
         );
         sendgrid.set_content_type(ContentType::Text);
         assert_eq!(
             sendgrid.sendgrid_email.get_first_content().content_type,
-            Some("text/plain")
+            Some(String::from("text/plain"))
         );
     }
 
