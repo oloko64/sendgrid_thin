@@ -23,9 +23,9 @@ impl AsRef<ContentType> for ContentType {
 }
 
 #[must_use]
-pub struct SendgridRequest(Sendgrid);
+pub struct SendgridRequest<'a>(&'a Sendgrid);
 
-impl SendgridRequest {
+impl SendgridRequest<'_> {
     /// Sends an email using Sendgrid API.
     /// # Example
     /// ```
@@ -427,8 +427,7 @@ impl Sendgrid {
     /// ```
     pub fn build(&mut self) -> Result<SendgridRequest> {
         self.check_required_parameters()?;
-        let request = take(self);
-        Ok(SendgridRequest(request))
+        Ok(SendgridRequest(&*self))
     }
 }
 
