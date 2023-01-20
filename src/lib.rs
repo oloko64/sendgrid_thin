@@ -405,6 +405,26 @@ impl Sendgrid {
         Ok(())
     }
 
+    /// Build the request to send the email.
+    /// # Example
+    /// ```
+    /// use sendgrid_thin::Sendgrid;
+    /// let mut sendgrid = Sendgrid::new("SENDGRID_API_KEY");
+    /// 
+    /// // Required
+    /// sendgrid
+    ///    .set_to_emails(&["to_email_1@example.com", "to_email_2@example.com"])
+    ///    .set_from_email("from_email@example.com")
+    ///    .set_subject("subject of email")
+    ///    .set_body("body of email");
+    /// 
+    /// let request = sendgrid.build().unwrap();
+    /// 
+    /// match request.send() {
+    ///   Ok(message) => println!("{}", message),
+    ///  Err(err) => println!("Error sending email: {}", err),
+    /// }
+    /// ```
     pub fn build(&mut self) -> Result<SendgridRequest> {
         self.check_required_parameters()?;
         let request = take(self);
