@@ -1,9 +1,6 @@
 use anyhow::{bail, Result};
 use serde::Serialize;
-use std::{
-    mem::take,
-    time::{SystemTime, UNIX_EPOCH},
-};
+use std::time::{SystemTime, UNIX_EPOCH};
 
 /// The content type of the email.
 /// # Example
@@ -64,8 +61,7 @@ impl SendgridRequest<'_> {
                 .as_secs();
             if current_time < send_at {
                 return Ok(format!(
-                    "Email successfully scheduled to be sent at {}.",
-                    send_at
+                    "Email successfully scheduled to be sent at {send_at}."
                 ));
             }
         }
@@ -410,16 +406,16 @@ impl Sendgrid {
     /// ```
     /// use sendgrid_thin::Sendgrid;
     /// let mut sendgrid = Sendgrid::new("SENDGRID_API_KEY");
-    /// 
+    ///
     /// // Required
     /// sendgrid
     ///    .set_to_emails(&["to_email_1@example.com", "to_email_2@example.com"])
     ///    .set_from_email("from_email@example.com")
     ///    .set_subject("subject of email")
     ///    .set_body("body of email");
-    /// 
+    ///
     /// let request = sendgrid.build().unwrap();
-    /// 
+    ///
     /// match request.send() {
     ///   Ok(message) => println!("{}", message),
     ///  Err(err) => println!("Error sending email: {}", err),
