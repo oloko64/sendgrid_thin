@@ -4,7 +4,7 @@
 
 A thin wrapper around the SendGrid V3 API.
 
-It does not use the crate `tokio` or `hyper` and is therefore very lightweight and do not interfere with your existing runtime.
+It exposes a simple API to send emails with SendGrid with a blocking or non-blocking way.
 
 You can use it inside your Actix, Axum or Rocket application without any problems.
 
@@ -37,7 +37,7 @@ I recommend the [dotenvy](https://crates.io/crates/dotenvy) crate to load the AP
             Err(err) => println!("Error sending email: {err}"),
         }
 
-        // Send the email with a blocking client
+        // Send the email with a blocking client (in this case the main function cannot be async)
         match sendgrid.send_blocking() {
             Ok(message) => println!("{message}"),
             Err(err) => println!("Error sending email: {err}"),
