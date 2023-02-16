@@ -12,10 +12,10 @@ license = "MIT"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-anyhow = "1.0.68"
+anyhow = "1.0.69"
 reqwest = { version = "0.11.14", features = ["blocking", "json"] }
 serde = { version = "1.0.152", features = ["derive"] }
 
 [dev-dependencies]
 tokio = { version = "1.25.0", features = ["macros", "rt"] }
-serde_json = "1.0.91"
+serde_json = "1.0.93"
