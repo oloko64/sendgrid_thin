@@ -19,7 +19,6 @@ impl AsRef<ContentType> for ContentType {
     }
 }
 
-#[derive(Default)]
 #[must_use]
 pub struct Sendgrid {
     api_key: String,
@@ -116,31 +115,31 @@ impl Sendgrid {
     /// # Example
     /// ```
     /// use sendgrid_thin::{Sendgrid, ContentType};
-    /// let mut sendgrid = Sendgrid::new("SENDGRID_API_KEY");
     ///
-    /// // Required
-    /// sendgrid
-    ///    .set_to_emails(&["to_email_1@example.com", "to_email_2@example.com"])
-    ///    .set_from_email("from_email@example.com")
-    ///    .set_subject("subject of email")
-    ///    .set_body("body of email");
+    /// #[tokio::main]
+    /// async fn main() {
+    ///     let sendgrid = Sendgrid::new("SENDGRID_API_KEY")
+    ///     // Required
+    ///     .set_to_emails(&["to_email_1@example.com", "to_email_2@example.com"])
+    ///     .set_from_email("from_email@example.com")
+    ///     .set_subject("subject of email")
+    ///     .set_body("body of email")
+    ///     // Optional
+    ///     .set_content_type(ContentType::Text)
+    ///     .set_send_at(1668271500)
+    ///     .set_cc_emails(&["cc_email_1@example.com", "cc_email_2@example.com"]);
     ///
-    /// // Optional
-    ///sendgrid
-    ///    .set_content_type(ContentType::Text)
-    ///    .set_send_at(1668271500)
-    ///    .set_cc_emails(&["cc_email_1@example.com", "cc_email_2@example.com"]);
-    ///
-    /// match sendgrid.send() {
-    ///    Ok(message) => println!("{}", message),
-    ///    Err(err) => println!("Error sending email: {}", err),
+    ///     match sendgrid.send().await {
+    ///         Ok(message) => println!("{message}"),
+    ///         Err(err) => println!("Error sending email: {err}"),
+    ///     }
     /// }
     /// ```
     #[must_use = "Sendgrid::new() returns a Sendgrid instance"]
     pub fn new(api_key: impl Into<String>) -> Sendgrid {
         Self {
             api_key: api_key.into(),
-            ..Default::default()
+            sendgrid_email: SendgridEmail::default(),
         }
     }
 
@@ -149,21 +148,23 @@ impl Sendgrid {
     /// # Example
     /// ```
     /// use sendgrid_thin::Sendgrid;
-    /// let mut sendgrid = Sendgrid::new("SENDGRID_API_KEY");
     ///
-    /// // Required
-    ///sendgrid
-    ///    .set_to_emails(&["to_email_1@example.com", "to_email_2@example.com"])
-    ///    .set_from_email("from_email@example.com")
-    ///    .set_subject("subject of email")
-    ///    .set_body("body of email");
+    /// #[tokio::main]
+    /// async fn main() {
+    ///     let sendgrid = Sendgrid::new("SENDGRID_API_KEY")
+    ///     // Required
+    ///     .set_to_emails(&["to_email_1@example.com", "to_email_2@example.com"])
+    ///     .set_from_email("from_email@example.com")
+    ///     .set_subject("subject of email")
+    ///     .set_body("body of email");
     ///
-    /// match sendgrid.send() {
-    ///    Ok(message) => println!("{}", message),
-    ///    Err(err) => println!("Error sending email: {}", err),
+    ///     match sendgrid.send().await {
+    ///         Ok(message) => println!("{message}"),
+    ///         Err(err) => println!("Error sending email: {err}"),
+    ///     }
     /// }
     /// ```
-    pub fn set_to_emails<T>(&mut self, to_email: impl IntoIterator<Item = T>) -> &mut Sendgrid
+    pub fn set_to_emails<T>(mut self, to_email: impl IntoIterator<Item = T>) -> Sendgrid
     where
         T: AsRef<str>,
     {
@@ -181,21 +182,23 @@ impl Sendgrid {
     /// # Example
     /// ```
     /// use sendgrid_thin::Sendgrid;
-    /// let mut sendgrid = Sendgrid::new("SENDGRID_API_KEY");
     ///
-    /// // Required
-    ///sendgrid
-    ///    .set_to_emails(&["to_email_1@example.com", "to_email_2@example.com"])
-    ///    .set_from_email("from_email@example.com")
-    ///    .set_subject("subject of email")
-    ///    .set_body("body of email");
+    /// #[tokio::main]
+    /// async fn main() {
+    ///     let sendgrid = Sendgrid::new("SENDGRID_API_KEY")
+    ///     // Required
+    ///     .set_to_emails(&["to_email_1@example.com", "to_email_2@example.com"])
+    ///     .set_from_email("from_email@example.com")
+    ///     .set_subject("subject of email")
+    ///     .set_body("body of email");
     ///
-    /// match sendgrid.send() {
-    ///    Ok(message) => println!("{}", message),
-    ///    Err(err) => println!("Error sending email: {}", err),
+    ///     match sendgrid.send().await {
+    ///         Ok(message) => println!("{message}"),
+    ///         Err(err) => println!("Error sending email: {err}"),
+    ///     }
     /// }
     /// ```
-    pub fn set_from_email(&mut self, from_email: impl Into<String>) -> &mut Sendgrid {
+    pub fn set_from_email(mut self, from_email: impl Into<String>) -> Sendgrid {
         self.sendgrid_email.from.email = Some(from_email.into());
         self
     }
@@ -205,21 +208,23 @@ impl Sendgrid {
     /// # Example
     /// ```
     /// use sendgrid_thin::Sendgrid;
-    /// let mut sendgrid = Sendgrid::new("SENDGRID_API_KEY");
     ///
-    /// // Required
-    /// sendgrid
-    ///    .set_to_emails(&["to_email_1@example.com", "to_email_2@example.com"])
-    ///    .set_from_email("from_email@example.com")
-    ///    .set_subject("subject of email")
-    ///    .set_body("body of email");
+    /// #[tokio::main]
+    /// async fn main() {
+    ///     let sendgrid = Sendgrid::new("SENDGRID_API_KEY")
+    ///     // Required
+    ///     .set_to_emails(&["to_email_1@example.com", "to_email_2@example.com"])
+    ///     .set_from_email("from_email@example.com")
+    ///     .set_subject("subject of email")
+    ///     .set_body("body of email");
     ///
-    /// match sendgrid.send() {
-    ///    Ok(message) => println!("{}", message),
-    ///    Err(err) => println!("Error sending email: {}", err),
+    ///     match sendgrid.send().await {
+    ///         Ok(message) => println!("{message}"),
+    ///         Err(err) => println!("Error sending email: {err}"),
+    ///     }
     /// }
     /// ```
-    pub fn set_subject(&mut self, subject: impl Into<String>) -> &mut Sendgrid {
+    pub fn set_subject(mut self, subject: impl Into<String>) -> Sendgrid {
         self.sendgrid_email.subject = Some(subject.into());
         self
     }
@@ -229,21 +234,23 @@ impl Sendgrid {
     /// # Example
     /// ```
     /// use sendgrid_thin::Sendgrid;
-    /// let mut sendgrid = Sendgrid::new("SENDGRID_API_KEY");
     ///
-    /// // Required
-    /// sendgrid
-    ///    .set_to_emails(&["to_email_1@example.com", "to_email_2@example.com"])
-    ///    .set_from_email("from_email@example.com")
-    ///    .set_subject("subject of email")
-    ///    .set_body("body of email");
+    /// #[tokio::main]
+    /// async fn main() {
+    ///     let sendgrid = Sendgrid::new("SENDGRID_API_KEY")
+    ///     // Required
+    ///     .set_to_emails(&["to_email_1@example.com", "to_email_2@example.com"])
+    ///     .set_from_email("from_email@example.com")
+    ///     .set_subject("subject of email")
+    ///     .set_body("body of email");
     ///
-    /// match sendgrid.send() {
-    ///    Ok(message) => println!("{}", message),
-    ///    Err(err) => println!("Error sending email: {}", err),
+    ///     match sendgrid.send().await {
+    ///         Ok(message) => println!("{message}"),
+    ///         Err(err) => println!("Error sending email: {err}"),
+    ///     }
     /// }
     /// ```
-    pub fn set_body(&mut self, body: impl Into<String>) -> &mut Sendgrid {
+    pub fn set_body(mut self, body: impl Into<String>) -> Sendgrid {
         self.sendgrid_email.get_first_content().value = Some(body.into());
         self
     }
@@ -254,23 +261,24 @@ impl Sendgrid {
     /// # Example
     /// ```
     /// use sendgrid_thin::Sendgrid;
-    /// let mut sendgrid = Sendgrid::new("SENDGRID_API_KEY");
     ///
-    /// // Required
-    /// sendgrid
-    ///    .set_to_emails(&["to_email_1@example.com", "to_email_2@example.com"])
-    ///    .set_from_email("from_email@example.com")
-    ///    .set_subject("subject of email")
-    ///    .set_body("body of email");
+    /// #[tokio::main]
+    /// async fn main() {
+    ///     let sendgrid = Sendgrid::new("SENDGRID_API_KEY")
+    ///     // Required
+    ///     .set_to_emails(&["to_email_1@example.com", "to_email_2@example.com"])
+    ///     .set_from_email("from_email@example.com")
+    ///     .set_subject("subject of email")
+    ///     .set_body("body of email")
+    ///     .set_cc_emails(&["cc_email1@example.com", "cc_email2@example.com"]);
     ///
-    /// sendgrid.set_cc_emails(&["cc_email1@example.com", "cc_email2@example.com"]);
-    ///
-    /// match sendgrid.send() {
-    ///    Ok(message) => println!("{}", message),
-    ///    Err(err) => println!("Error sending email: {}", err),
+    ///     match sendgrid.send().await {
+    ///         Ok(message) => println!("{message}"),
+    ///         Err(err) => println!("Error sending email: {err}"),
+    ///     }
     /// }
     /// ```
-    pub fn set_cc_emails<T>(&mut self, cc_emails: impl IntoIterator<Item = T>) -> &mut Sendgrid
+    pub fn set_cc_emails<T>(mut self, cc_emails: impl IntoIterator<Item = T>) -> Sendgrid
     where
         T: AsRef<str>,
     {
@@ -289,23 +297,24 @@ impl Sendgrid {
     /// # Example
     /// ```
     /// use sendgrid_thin::{Sendgrid, ContentType};
-    /// let mut sendgrid = Sendgrid::new("SENDGRID_API_KEY");
     ///
-    /// // Required
-    /// sendgrid
-    ///    .set_to_emails(&["to_email_1@example.com", "to_email_2@example.com"])
-    ///    .set_from_email("from_email@example.com")
-    ///    .set_subject("subject of email")
-    ///    .set_body("body of email");
+    /// #[tokio::main]
+    /// async fn main() {
+    ///     let sendgrid = Sendgrid::new("SENDGRID_API_KEY")
+    ///     // Required
+    ///     .set_to_emails(&["to_email_1@example.com", "to_email_2@example.com"])
+    ///     .set_from_email("from_email@example.com")
+    ///     .set_subject("subject of email")
+    ///     .set_body("body of email")
+    ///     .set_content_type(ContentType::Html);
     ///
-    /// sendgrid.set_content_type(ContentType::Html);
-    ///
-    /// match sendgrid.send() {
-    ///    Ok(message) => println!("{}", message),
-    ///    Err(err) => println!("Error sending email: {}", err),
+    ///     match sendgrid.send().await {
+    ///         Ok(message) => println!("{message}"),
+    ///         Err(err) => println!("Error sending email: {err}"),
+    ///     }
     /// }
     /// ```
-    pub fn set_content_type<T>(&mut self, content_type: T) -> &mut Sendgrid
+    pub fn set_content_type<T>(mut self, content_type: T) -> Sendgrid
     where
         T: AsRef<ContentType>,
     {
@@ -316,27 +325,28 @@ impl Sendgrid {
         self
     }
 
-    /// Set the time to send the email.
+    /// Set the time in unix timestamp when the email should be sent.
     /// # Example
     /// ```
     /// use sendgrid_thin::Sendgrid;
-    /// let mut sendgrid = Sendgrid::new("SENDGRID_API_KEY");
     ///
-    /// // Required
-    /// sendgrid
-    ///    .set_to_emails(&["to_email_1@example.com", "to_email_2@example.com"])
-    ///    .set_from_email("from_email@example.com")
-    ///    .set_subject("subject of email")
-    ///    .set_body("body of email");
+    /// #[tokio::main]
+    /// async fn main() {
+    ///     let sendgrid = Sendgrid::new("SENDGRID_API_KEY")
+    ///     // Required
+    ///     .set_to_emails(&["to_email_1@example.com", "to_email_2@example.com"])
+    ///     .set_from_email("from_email@example.com")
+    ///     .set_subject("subject of email")
+    ///     .set_body("body of email")
+    ///     .set_send_at(1668271500);
     ///
-    /// sendgrid.set_send_at(1668271500);
-    ///
-    /// match sendgrid.send() {
-    ///    Ok(message) => println!("{}", message),
-    ///    Err(err) => println!("Error sending email: {}", err),
+    ///     match sendgrid.send().await {
+    ///         Ok(message) => println!("{message}"),
+    ///         Err(err) => println!("Error sending email: {err}"),
+    ///     }
     /// }
     /// ```
-    pub fn set_send_at(&mut self, send_at: u64) -> &mut Sendgrid {
+    pub fn set_send_at(mut self, send_at: u64) -> Sendgrid {
         self.sendgrid_email.send_at = Some(send_at);
         self
     }
@@ -360,51 +370,112 @@ impl Sendgrid {
         Ok(())
     }
 
-    /// Sends an email using Sendgrid API.
-    /// # Example
-    /// ```
-    /// use sendgrid_thin::{Sendgrid, ContentType};
-    /// let mut sendgrid = Sendgrid::new("SENDGRID_API_KEY");
-    /// // Required
-    /// sendgrid
-    ///    .set_to_emails(&["to_email_1@example.com", "to_email_2@example.com"])
-    ///    .set_from_email("from_email@example.com")
-    ///    .set_subject("subject of email")
-    ///    .set_body("body of email");
-    ///
-    /// // Optional
-    ///sendgrid
-    ///    .set_content_type(ContentType::Text)
-    ///    .set_send_at(1668271500)
-    ///    .set_cc_emails(&["cc_email_1@example.com", "cc_email_2@example.com"]);
-    ///
-    /// match sendgrid.send() {
-    ///    Ok(message) => println!("{}", message),
-    ///    Err(err) => println!("Error sending email: {}", err),
-    /// }
-    /// ```
-    pub fn send(&self) -> Result<String> {
-        self.check_required_parameters()?;
-
-        ureq::post("https://api.sendgrid.com/v3/mail/send")
-            .set("Authorization", &format!("Bearer {}", self.api_key))
-            .set("Content-Type", "application/json")
-            .send_string(
-                &serde_json::to_string(&self.sendgrid_email).expect("Error serializing email"),
-            )?;
-
+    fn is_scheduled(&self) -> Option<String> {
         if let Some(send_at) = self.sendgrid_email.send_at {
             let current_time = SystemTime::now()
                 .duration_since(UNIX_EPOCH)
                 .expect("Error getting current time")
                 .as_secs();
             if current_time < send_at {
-                return Ok(format!(
+                return Some(format!(
                     "Email successfully scheduled to be sent at {send_at}."
                 ));
             }
         }
-        Ok("Email sent successfully.".to_owned())
+        None
+    }
+
+    /// Sends an email using Sendgrid API with a blocking client.
+    /// # Example
+    /// ```
+    /// use sendgrid_thin::{Sendgrid, ContentType};
+    ///
+    /// fn main() {
+    ///     let sendgrid = Sendgrid::new("SENDGRID_API_KEY")
+    ///     // Required
+    ///     .set_to_emails(&["to_email_1@example.com", "to_email_2@example.com"])
+    ///     .set_from_email("from_email@example.com")
+    ///     .set_subject("subject of email")
+    ///     .set_body("body of email")
+    ///     // Optional
+    ///     .set_content_type(ContentType::Text)
+    ///     .set_send_at(1668271500)
+    ///     .set_cc_emails(&["cc_email_1@example.com", "cc_email_2@example.com"]);
+    ///
+    ///     match sendgrid.send_blocking() {
+    ///         Ok(message) => println!("{message}"),
+    ///         Err(err) => println!("Error sending email: {err}"),
+    ///     }
+    /// }
+    /// ```
+    pub fn send_blocking(&self) -> Result<String> {
+        self.check_required_parameters()?;
+
+        let client = reqwest::blocking::Client::new();
+
+        let response = client
+            .post("https://api.sendgrid.com/v3/mail/send")
+            .bearer_auth(&self.api_key)
+            .header("Content-Type", "application/json")
+            .json(&self.sendgrid_email)
+            .send()?;
+
+        if !response.status().is_success() {
+            bail!("Error sending email: {}", response.text()?);
+        }
+
+        let message = self
+            .is_scheduled()
+            .unwrap_or(String::from("Email successfully sent."));
+
+        Ok(message)
+    }
+
+    /// Sends an email using Sendgrid API with a non-blocking client.
+    /// # Example
+    /// ```
+    /// use sendgrid_thin::{Sendgrid, ContentType};
+    /// #[tokio::main]
+    /// async fn main() {
+    ///     let sendgrid = Sendgrid::new("SENDGRID_API_KEY")
+    ///     // Required
+    ///     .set_to_emails(&["to_email_1@example.com", "to_email_2@example.com"])
+    ///     .set_from_email("from_email@example.com")
+    ///     .set_subject("subject of email")
+    ///     .set_body("body of email")
+    ///     // Optional
+    ///     .set_content_type(ContentType::Text)
+    ///     .set_send_at(1668271500)
+    ///     .set_cc_emails(&["cc_email_1@example.com", "cc_email_2@example.com"]);
+    ///
+    ///     match sendgrid.send().await {
+    ///         Ok(message) => println!("{message}"),
+    ///         Err(err) => println!("Error sending email: {err}"),
+    ///     }
+    /// }
+    /// ```
+    pub async fn send(&self) -> Result<String> {
+        self.check_required_parameters()?;
+
+        let client = reqwest::Client::new();
+
+        let response = client
+            .post("https://api.sendgrid.com/v3/mail/send")
+            .bearer_auth(&self.api_key)
+            .header("Content-Type", "application/json")
+            .json(&self.sendgrid_email)
+            .send()
+            .await?;
+
+        if !response.status().is_success() {
+            bail!("Error sending email: {}", response.text().await?);
+        }
+
+        let message = self
+            .is_scheduled()
+            .unwrap_or(String::from("Email successfully sent."));
+
+        Ok(message)
     }
 }
 
@@ -435,30 +506,30 @@ mod tests {
 
     #[test]
     fn test_content_type() {
-        let mut sendgrid = Sendgrid::new("SENDGRID_API_KEY");
+        let sendgrid = Sendgrid::new("SENDGRID_API_KEY");
         assert_eq!(
-            sendgrid.sendgrid_email.get_first_content().content_type,
+            sendgrid.sendgrid_email.content[0].content_type,
             Some(String::from("text/plain"))
         );
-        sendgrid.set_content_type(ContentType::Html);
+
+        let sendgrid = sendgrid.set_content_type(ContentType::Html);
         assert_eq!(
-            sendgrid.sendgrid_email.get_first_content().content_type,
+            sendgrid.sendgrid_email.content[0].content_type,
             Some(String::from("text/html"))
         );
-        sendgrid.set_content_type(ContentType::Text);
+
+        let sendgrid = sendgrid.set_content_type(ContentType::Text);
         assert_eq!(
-            sendgrid.sendgrid_email.get_first_content().content_type,
+            sendgrid.sendgrid_email.content[0].content_type,
             Some(String::from("text/plain"))
         );
     }
 
     #[test]
     fn test_set_body_and_subject_email() {
-        let mut sendgrid = Sendgrid::new("SENDGRID_API_KEY");
-        sendgrid
+        let sendgrid = Sendgrid::new("SENDGRID_API_KEY")
             .set_to_emails(&["to_email@example.com"])
-            .set_from_email("from_email@example.com");
-        sendgrid
+            .set_from_email("from_email@example.com")
             .set_body("body_test")
             .set_subject("subject_test")
             .set_content_type(ContentType::Text);
@@ -467,23 +538,21 @@ mod tests {
 
     #[test]
     fn test_set_body_email_with_cc_emails() {
-        let mut sendgrid = Sendgrid::new("SENDGRID_API_KEY");
-        sendgrid
+        let sendgrid = Sendgrid::new("SENDGRID_API_KEY")
             .set_to_emails(&["to_email@example.com"])
-            .set_from_email("from_email@example.com");
-        sendgrid
+            .set_from_email("from_email@example.com")
             .set_body("body_test")
             .set_subject("subject_test")
-            .set_content_type(ContentType::Text);
-        sendgrid.set_cc_emails(&["cc_email1@example.com", "cc_email2@example.com"]);
+            .set_content_type(ContentType::Text)
+            .set_cc_emails(&["cc_email1@example.com", "cc_email2@example.com"]);
         assert_eq!(serde_json::to_string(&sendgrid.sendgrid_email).unwrap(), "{\"personalizations\":[{\"to\":[{\"email\":\"to_email@example.com\"}],\"cc\":[{\"email\":\"cc_email1@example.com\"},{\"email\":\"cc_email2@example.com\"}]}],\"from\":{\"email\":\"from_email@example.com\"},\"subject\":\"subject_test\",\"content\":[{\"type\":\"text/plain\",\"value\":\"body_test\"}]}");
     }
 
     #[test]
     fn test_set_send_at() {
-        let mut sendgrid = Sendgrid::new("SENDGRID_API_KEY");
+        let sendgrid = Sendgrid::new("SENDGRID_API_KEY");
         assert_eq!(sendgrid.sendgrid_email.send_at, None);
-        sendgrid.set_send_at(1668271500);
+        let sendgrid = sendgrid.set_send_at(1668271500);
         assert_eq!(sendgrid.sendgrid_email.send_at, Some(1668271500));
     }
 }
