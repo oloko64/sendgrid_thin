@@ -17,6 +17,6 @@ anyhow = "1.0.69"
 reqwest = { version = "0.11.14", features = ["blocking", "json"] }
 serde = { version = "1.0.155", features = ["derive"] }
 
-tokio = { version = "1.26.0", features = ["macros", "rt"] }
 [dev-dependencies]
+tokio = { version = "1.26.0", features = ["macros", "rt"] }
 serde_json = "1.0.94"
