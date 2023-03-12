@@ -142,11 +142,11 @@ impl SendgridBuilder {
     /// }
     /// ```
     pub fn new<T, U>(
-        api_key: T,
+        api_key: impl Into<String>,
         set_to_emails: U,
-        set_from_email: T,
-        subject: T,
-        body: T,
+        set_from_email: impl Into<String>,
+        subject: impl Into<String>,
+        body: impl Into<String>,
     ) -> SendgridBuilder
     where
         T: Into<String>,
@@ -322,11 +322,11 @@ impl Sendgrid {
     /// }
     /// ```
     pub fn builder<T, U>(
-        api_key: T,
+        api_key: impl Into<String>,
         set_to_emails: U,
-        set_from_email: T,
-        subject: T,
-        body: T,
+        set_from_email: impl Into<String>,
+        subject: impl Into<String>,
+        body: impl Into<String>,
     ) -> SendgridBuilder
     where
         T: Into<String>,
