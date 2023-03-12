@@ -22,8 +22,8 @@ I recommend the [dotenvy](https://crates.io/crates/dotenvy) crate to load the AP
     async fn main() {
         let mut sendgrid = Sendgrid::builder(
                 "SENDGRID_API_KEY",
-                ["to_email_1@example.com","to_email_2@example.com"],
                 "from_email@example.com",
+                ["to_email_1@example.com","to_email_2@example.com"],
                 "subject of email",
                 "body of email",
             )
