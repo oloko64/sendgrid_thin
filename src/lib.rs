@@ -153,7 +153,22 @@ impl SendgridBuilder {
         T: Into<String>,
         U: IntoIterator<Item = T>,
     {
-        Sendgrid::builder(api_key, set_to_emails, set_from_email, subject, body)
+        SendgridBuilder {
+            api_key: api_key.into(),
+            sendgrid_email: {
+                let mut sendgrid_email = SendgridEmail::default();
+                sendgrid_email.get_first_personalization().to = set_to_emails
+                    .into_iter()
+                    .map(|email| From {
+                        email: email.into(),
+                    })
+                    .collect();
+                sendgrid_email.from.email = set_from_email.into();
+                sendgrid_email.subject = subject.into();
+                sendgrid_email.get_first_content().value = body.into();
+                sendgrid_email
+            },
+        }
     }
 
     /// Add a CC email to the email.
@@ -334,22 +349,7 @@ impl Sendgrid {
         T: Into<String>,
         U: IntoIterator<Item = T>,
     {
-        SendgridBuilder {
-            api_key: api_key.into(),
-            sendgrid_email: {
-                let mut sendgrid_email = SendgridEmail::default();
-                sendgrid_email.get_first_personalization().to = set_to_emails
-                    .into_iter()
-                    .map(|email| From {
-                        email: email.into(),
-                    })
-                    .collect();
-                sendgrid_email.from.email = set_from_email.into();
-                sendgrid_email.subject = subject.into();
-                sendgrid_email.get_first_content().value = body.into();
-                sendgrid_email
-            },
-        }
+        SendgridBuilder::new(api_key, set_to_emails, set_from_email, subject, body)
     }
 
     fn is_scheduled(&self) -> Option<String> {
