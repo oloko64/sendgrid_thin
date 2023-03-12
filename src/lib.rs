@@ -2,12 +2,6 @@ use anyhow::{bail, Result};
 use serde::Serialize;
 use std::time::{SystemTime, UNIX_EPOCH};
 
-/// The content type of the email.
-/// # Example
-/// ```
-/// // ContentType::Html; Equals to "text/html"
-/// // ContentType::Text; Equals to "text/plain"
-/// ```
 pub enum ContentType {
     Text,
     Html,
@@ -25,6 +19,7 @@ pub struct Sendgrid {
     sendgrid_email: SendgridEmail,
 }
 
+#[must_use]
 pub struct SendgridBuilder {
     api_key: String,
     sendgrid_email: SendgridEmail,
@@ -120,6 +115,46 @@ struct Personalization {
 }
 
 impl SendgridBuilder {
+    /// Create a new sendgrid builder.
+    /// # Example
+    /// ```
+    /// use sendgrid_thin::{SendgridBuilder, ContentType};
+    ///
+    /// #[tokio::main]
+    /// async fn main() {
+    ///     let sendgrid = SendgridBuilder::new(
+    ///         "SENDGRID_API_KEY",
+    ///         ["to_email_1@example.com","to_email_2@example.com"],
+    ///         "from_email@example.com",
+    ///         "subject of email",
+    ///         "body of email",
+    ///      )
+    ///     .set_content_type(ContentType::Text)
+    ///     .set_send_at(1668271500)
+    ///     .set_cc_emails(&["cc_email_1@example.com", "cc_email_2@example.com"])
+    ///     .build()
+    ///     .unwrap();
+    ///
+    ///     match sendgrid.send().await {
+    ///         Ok(message) => println!("{message}"),
+    ///         Err(err) => println!("Error sending email: {err}"),
+    ///     }
+    /// }
+    /// ```
+    pub fn new<T, U>(
+        api_key: T,
+        set_to_emails: U,
+        set_from_email: T,
+        subject: T,
+        body: T,
+    ) -> SendgridBuilder
+    where
+        T: Into<String>,
+        U: IntoIterator<Item = T>,
+    {
+        Sendgrid::builder(api_key, set_to_emails, set_from_email, subject, body)
+    }
+
     /// Add a CC email to the email.
     ///
     /// Allow to send the email to multiple recipients.
@@ -146,7 +181,6 @@ impl SendgridBuilder {
     ///     }
     /// }
     /// ```
-    #[must_use]
     pub fn set_cc_emails<T>(mut self, cc_emails: impl IntoIterator<Item = T>) -> Self
     where
         T: AsRef<str>,
@@ -186,7 +220,6 @@ impl SendgridBuilder {
     ///     }
     /// }
     /// ```
-    #[must_use]
     pub fn set_content_type<T>(mut self, content_type: T) -> Self
     where
         T: AsRef<ContentType>,
@@ -222,12 +255,37 @@ impl SendgridBuilder {
     ///     }
     /// }
     /// ```
-    #[must_use]
     pub fn set_send_at(mut self, send_at: u64) -> Self {
         self.sendgrid_email.send_at = Some(send_at);
         self
     }
 
+    /// Builds the Sendgrid struct.
+    /// # Example
+    /// ```
+    /// use sendgrid_thin::{SendgridBuilder, ContentType};
+    ///
+    /// #[tokio::main]
+    /// async fn main() {
+    ///     let sendgrid = SendgridBuilder::new(
+    ///         "SENDGRID_API_KEY",
+    ///         ["to_email_1@example.com","to_email_2@example.com"],
+    ///         "from_email@example.com",
+    ///         "subject of email",
+    ///         "body of email",
+    ///      )
+    ///     .build()
+    ///     .unwrap();
+    ///
+    ///     match sendgrid.send().await {
+    ///         Ok(message) => println!("{message}"),
+    ///         Err(err) => println!("Error sending email: {err}"),
+    ///     }
+    /// }
+    /// ```
+    ///
+    /// # Errors
+    /// Returns an error if the Sendgrid struct is not valid.
     pub fn build(self) -> Result<Sendgrid> {
         Ok(Sendgrid {
             api_key: self.api_key,
@@ -237,7 +295,7 @@ impl SendgridBuilder {
 }
 
 impl Sendgrid {
-    /// Create a new sendgrid instance.
+    /// Create a new sendgrid builder.
     /// # Example
     /// ```
     /// use sendgrid_thin::{Sendgrid, ContentType};
@@ -263,7 +321,6 @@ impl Sendgrid {
     ///     }
     /// }
     /// ```
-    #[must_use = "Sendgrid::new() returns a Sendgrid instance"]
     pub fn builder<T, U>(
         api_key: T,
         set_to_emails: U,
@@ -333,6 +390,9 @@ impl Sendgrid {
     ///     }
     /// }
     /// ```
+    ///
+    /// # Errors
+    /// Returns an error if the request fails.
     pub fn send_blocking(&self) -> Result<String> {
         let client = reqwest::blocking::Client::new();
 
@@ -379,6 +439,9 @@ impl Sendgrid {
     ///     }
     /// }
     /// ```
+    ///
+    /// # Errors
+    /// Returns an error if the request fails.
     pub async fn send(&self) -> Result<String> {
         let client = reqwest::Client::new();
 
