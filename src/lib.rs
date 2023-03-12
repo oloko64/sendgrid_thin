@@ -146,6 +146,7 @@ impl SendgridBuilder {
     ///     }
     /// }
     /// ```
+    #[must_use]
     pub fn set_cc_emails<T>(mut self, cc_emails: impl IntoIterator<Item = T>) -> Self
     where
         T: AsRef<str>,
@@ -185,6 +186,7 @@ impl SendgridBuilder {
     ///     }
     /// }
     /// ```
+    #[must_use]
     pub fn set_content_type<T>(mut self, content_type: T) -> Self
     where
         T: AsRef<ContentType>,
@@ -220,6 +222,7 @@ impl SendgridBuilder {
     ///     }
     /// }
     /// ```
+    #[must_use]
     pub fn set_send_at(mut self, send_at: u64) -> Self {
         self.sendgrid_email.send_at = Some(send_at);
         self
