@@ -125,8 +125,8 @@ impl SendgridBuilder {
     /// async fn main() {
     ///     let sendgrid = SendgridBuilder::new(
     ///         "SENDGRID_API_KEY",
-    ///         ["to_email_1@example.com","to_email_2@example.com"],
     ///         "from_email@example.com",
+    ///         ["to_email_1@example.com","to_email_2@example.com"],
     ///         "subject of email",
     ///         "body of email",
     ///      )
@@ -144,8 +144,8 @@ impl SendgridBuilder {
     /// ```
     pub fn new<T, U>(
         api_key: impl Into<String>,
-        set_to_emails: U,
         set_from_email: impl Into<String>,
+        set_to_emails: U,
         subject: impl Into<String>,
         body: impl Into<String>,
     ) -> SendgridBuilder
@@ -182,8 +182,8 @@ impl SendgridBuilder {
     /// async fn main() {
     ///     let sendgrid = Sendgrid::builder(
     ///         "SENDGRID_API_KEY",
-    ///         ["to_email_1@example.com","to_email_2@example.com"],
     ///         "from_email@example.com",
+    ///         ["to_email_1@example.com","to_email_2@example.com"],
     ///         "subject of email",
     ///         "body of email",
     ///      )
@@ -221,8 +221,8 @@ impl SendgridBuilder {
     /// async fn main() {
     ///     let sendgrid = Sendgrid::builder(
     ///         "SENDGRID_API_KEY",
-    ///         ["to_email_1@example.com","to_email_2@example.com"],
     ///         "from_email@example.com",
+    ///         ["to_email_1@example.com","to_email_2@example.com"],
     ///         "subject of email",
     ///         "body of email",
     ///      )
@@ -256,8 +256,8 @@ impl SendgridBuilder {
     /// async fn main() {
     ///     let sendgrid = Sendgrid::builder(
     ///         "SENDGRID_API_KEY",
-    ///         ["to_email_1@example.com","to_email_2@example.com"],
     ///         "from_email@example.com",
+    ///         ["to_email_1@example.com","to_email_2@example.com"],
     ///         "subject of email",
     ///         "body of email",
     ///      )
@@ -285,8 +285,8 @@ impl SendgridBuilder {
     /// async fn main() {
     ///     let sendgrid = SendgridBuilder::new(
     ///         "SENDGRID_API_KEY",
-    ///         ["to_email_1@example.com","to_email_2@example.com"],
     ///         "from_email@example.com",
+    ///         ["to_email_1@example.com","to_email_2@example.com"],
     ///         "subject of email",
     ///         "body of email",
     ///      )
@@ -321,8 +321,8 @@ impl Sendgrid {
     /// async fn main() {
     ///     let sendgrid = Sendgrid::builder(
     ///         "SENDGRID_API_KEY",
-    ///         ["to_email_1@example.com","to_email_2@example.com"],
     ///         "from_email@example.com",
+    ///         ["to_email_1@example.com","to_email_2@example.com"],
     ///         "subject of email",
     ///         "body of email",
     ///      )
@@ -340,8 +340,8 @@ impl Sendgrid {
     /// ```
     pub fn builder<T, U>(
         api_key: impl Into<String>,
-        set_to_emails: U,
         set_from_email: impl Into<String>,
+        set_to_emails: U,
         subject: impl Into<String>,
         body: impl Into<String>,
     ) -> SendgridBuilder
@@ -349,7 +349,7 @@ impl Sendgrid {
         T: Into<String>,
         U: IntoIterator<Item = T>,
     {
-        SendgridBuilder::new(api_key, set_to_emails, set_from_email, subject, body)
+        SendgridBuilder::new(api_key, set_from_email, set_to_emails, subject, body)
     }
 
     fn is_scheduled(&self) -> Option<String> {
@@ -375,8 +375,8 @@ impl Sendgrid {
     /// fn main() {
     ///     let sendgrid = Sendgrid::builder(
     ///         "SENDGRID_API_KEY",
-    ///         ["to_email_1@example.com","to_email_2@example.com"],
     ///         "from_email@example.com",
+    ///         ["to_email_1@example.com","to_email_2@example.com"],
     ///         "subject of email",
     ///         "body of email",
     ///      )
@@ -424,8 +424,8 @@ impl Sendgrid {
     /// async fn main() {
     ///     let sendgrid = Sendgrid::builder(
     ///         "SENDGRID_API_KEY",
-    ///         ["to_email_1@example.com","to_email_2@example.com"],
     ///         "from_email@example.com",
+    ///         ["to_email_1@example.com","to_email_2@example.com"],
     ///         "subject of email",
     ///         "body of email",
     ///      )
@@ -475,8 +475,8 @@ mod tests {
     fn test_sendgrid_instance() {
         let sendgrid = Sendgrid::builder(
             "SENDGRID_API_KEY",
-            ["test_to@test.com"],
             "test_from@test.com",
+            ["test_to@test.com"],
             "subject",
             "body",
         );
@@ -506,8 +506,8 @@ mod tests {
     fn test_sendgrid_instance_builder() {
         let sendgrid = Sendgrid::builder(
             "SENDGRID_API_KEY",
-            ["test_to@test.com"],
             "test_from@test.com",
+            ["test_to@test.com"],
             "subject",
             "body",
         );
@@ -537,8 +537,8 @@ mod tests {
     fn test_content_type() {
         let sendgrid = Sendgrid::builder(
             "SENDGRID_API_KEY",
-            ["test_to@test.com"],
             "test_from@test.com",
+            ["test_to@test.com"],
             "subject",
             "body",
         );
@@ -564,8 +564,8 @@ mod tests {
     fn test_set_body_and_subject_email() {
         let sendgrid = Sendgrid::builder(
             "SENDGRID_API_KEY",
-            ["to_email@example.com"],
             "from_email@example.com",
+            ["to_email@example.com"],
             "subject_test",
             "body_test",
         )
@@ -579,8 +579,8 @@ mod tests {
     fn test_set_body_email_with_cc_emails() {
         let sendgrid = Sendgrid::builder(
             "SENDGRID_API_KEY",
-            ["to_email@example.com"],
             "from_email@example.com",
+            ["to_email@example.com"],
             "subject_test",
             "body_test",
         )
@@ -595,8 +595,8 @@ mod tests {
     fn test_set_send_at() {
         let sendgrid = Sendgrid::builder(
             "SENDGRID_API_KEY",
-            ["test_to@test.com"],
             "test_from@test.com",
+            ["test_to@test.com"],
             "subject",
             "body",
         );
