@@ -16,7 +16,8 @@ impl AsRef<ContentType> for ContentType {
 #[must_use]
 pub struct Sendgrid {
     api_key: String,
-    sendgrid_email: SendgridEmail,
+    send_at: Option<u64>,
+    sendgrid_email_body: String,
 }
 
 #[must_use]
@@ -181,7 +182,7 @@ impl SendgridBuilder {
     ///     }
     /// }
     /// ```
-    pub fn set_cc_emails<T>(mut self, cc_emails: impl IntoIterator<Item = T>) -> Self
+    pub fn set_cc_emails<T>(mut self, cc_emails: impl IntoIterator<Item = T>) -> SendgridBuilder
     where
         T: AsRef<str>,
     {
@@ -220,7 +221,7 @@ impl SendgridBuilder {
     ///     }
     /// }
     /// ```
-    pub fn set_content_type<T>(mut self, content_type: T) -> Self
+    pub fn set_content_type<T>(mut self, content_type: T) -> SendgridBuilder
     where
         T: AsRef<ContentType>,
     {
@@ -255,7 +256,7 @@ impl SendgridBuilder {
     ///     }
     /// }
     /// ```
-    pub fn set_send_at(mut self, send_at: u64) -> Self {
+    pub fn set_send_at(mut self, send_at: u64) -> SendgridBuilder {
         self.sendgrid_email.send_at = Some(send_at);
         self
     }
@@ -289,7 +290,8 @@ impl SendgridBuilder {
     pub fn build(self) -> Result<Sendgrid> {
         Ok(Sendgrid {
             api_key: self.api_key,
-            sendgrid_email: self.sendgrid_email,
+            sendgrid_email_body: serde_json::to_string(&self.sendgrid_email)?,
+            send_at: self.sendgrid_email.send_at,
         })
     }
 }
@@ -351,7 +353,7 @@ impl Sendgrid {
     }
 
     fn is_scheduled(&self) -> Option<String> {
-        if let Some(send_at) = self.sendgrid_email.send_at {
+        if let Some(send_at) = self.send_at {
             let current_time = SystemTime::now()
                 .duration_since(UNIX_EPOCH)
                 .expect("Error getting current time")
@@ -400,7 +402,7 @@ impl Sendgrid {
             .post("https://api.sendgrid.com/v3/mail/send")
             .bearer_auth(&self.api_key)
             .header("Content-Type", "application/json")
-            .json(&self.sendgrid_email)
+            .body(self.sendgrid_email_body.clone())
             .send()?;
 
         if !response.status().is_success() {
@@ -449,7 +451,7 @@ impl Sendgrid {
             .post("https://api.sendgrid.com/v3/mail/send")
             .bearer_auth(&self.api_key)
             .header("Content-Type", "application/json")
-            .json(&self.sendgrid_email)
+            .body(self.sendgrid_email_body.clone())
             .send()
             .await?;
 
@@ -477,9 +479,7 @@ mod tests {
             "test_from@test.com",
             "subject",
             "body",
-        )
-        .build()
-        .unwrap();
+        );
         assert_eq!(
             sendgrid.sendgrid_email,
             SendgridEmail {
@@ -510,9 +510,7 @@ mod tests {
             "test_from@test.com",
             "subject",
             "body",
-        )
-        .build()
-        .unwrap();
+        );
         assert_eq!(
             sendgrid.sendgrid_email,
             SendgridEmail {
@@ -574,7 +572,7 @@ mod tests {
         .set_content_type(ContentType::Text)
         .build()
         .unwrap();
-        assert_eq!(serde_json::to_string(&sendgrid.sendgrid_email).unwrap(), "{\"personalizations\":[{\"to\":[{\"email\":\"to_email@example.com\"}]}],\"from\":{\"email\":\"from_email@example.com\"},\"subject\":\"subject_test\",\"content\":[{\"type\":\"text/plain\",\"value\":\"body_test\"}]}");
+        assert_eq!(sendgrid.sendgrid_email_body, "{\"personalizations\":[{\"to\":[{\"email\":\"to_email@example.com\"}]}],\"from\":{\"email\":\"from_email@example.com\"},\"subject\":\"subject_test\",\"content\":[{\"type\":\"text/plain\",\"value\":\"body_test\"}]}");
     }
 
     #[test]
@@ -590,7 +588,7 @@ mod tests {
         .set_cc_emails(&["cc_email1@example.com", "cc_email2@example.com"])
         .build()
         .unwrap();
-        assert_eq!(serde_json::to_string(&sendgrid.sendgrid_email).unwrap(), "{\"personalizations\":[{\"to\":[{\"email\":\"to_email@example.com\"}],\"cc\":[{\"email\":\"cc_email1@example.com\"},{\"email\":\"cc_email2@example.com\"}]}],\"from\":{\"email\":\"from_email@example.com\"},\"subject\":\"subject_test\",\"content\":[{\"type\":\"text/plain\",\"value\":\"body_test\"}]}");
+        assert_eq!(sendgrid.sendgrid_email_body, "{\"personalizations\":[{\"to\":[{\"email\":\"to_email@example.com\"}],\"cc\":[{\"email\":\"cc_email1@example.com\"},{\"email\":\"cc_email2@example.com\"}]}],\"from\":{\"email\":\"from_email@example.com\"},\"subject\":\"subject_test\",\"content\":[{\"type\":\"text/plain\",\"value\":\"body_test\"}]}");
     }
 
     #[test]
