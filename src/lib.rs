@@ -144,10 +144,10 @@ impl SendgridBuilder {
     /// ```
     pub fn new<T, U>(
         api_key: impl Into<String>,
-        set_from_email: impl Into<String>,
-        set_to_emails: U,
-        subject: impl Into<String>,
-        body: impl Into<String>,
+        from_email: impl Into<String>,
+        to_emails: U,
+        email_subject: impl Into<String>,
+        email_body: impl Into<String>,
     ) -> SendgridBuilder
     where
         T: Into<String>,
@@ -157,15 +157,15 @@ impl SendgridBuilder {
             api_key: api_key.into(),
             sendgrid_email: {
                 let mut sendgrid_email = SendgridEmail::default();
-                sendgrid_email.get_first_personalization().to = set_to_emails
+                sendgrid_email.get_first_personalization().to = to_emails
                     .into_iter()
                     .map(|email| From {
                         email: email.into(),
                     })
                     .collect();
-                sendgrid_email.from.email = set_from_email.into();
-                sendgrid_email.subject = subject.into();
-                sendgrid_email.get_first_content().value = body.into();
+                sendgrid_email.from.email = from_email.into();
+                sendgrid_email.subject = email_subject.into();
+                sendgrid_email.get_first_content().value = email_body.into();
                 sendgrid_email
             },
         }
@@ -340,16 +340,16 @@ impl Sendgrid {
     /// ```
     pub fn builder<T, U>(
         api_key: impl Into<String>,
-        set_from_email: impl Into<String>,
-        set_to_emails: U,
-        subject: impl Into<String>,
-        body: impl Into<String>,
+        from_email: impl Into<String>,
+        to_emails: U,
+        email_subject: impl Into<String>,
+        email_body: impl Into<String>,
     ) -> SendgridBuilder
     where
         T: Into<String>,
         U: IntoIterator<Item = T>,
     {
-        SendgridBuilder::new(api_key, set_from_email, set_to_emails, subject, body)
+        SendgridBuilder::new(api_key, from_email, to_emails, email_subject, email_body)
     }
 
     fn is_scheduled(&self) -> Option<String> {
