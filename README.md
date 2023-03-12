@@ -46,3 +46,22 @@ I recommend the [dotenvy](https://crates.io/crates/dotenvy) crate to load the AP
         }
     }
 ```
+
+# Features
+
+### Default features
+- `blocking` - Enables the blocking client
+
+---
+
+You can disable the default features by adding the following to your `Cargo.toml`:
+
+```toml
+sendgrid_thin = { version = "x.x.x", default-features = false }
+```
+
+Or when adding the dependency via `cargo add`:
+
+```bash
+cargo add sendgrid_thin --no-default-features
+```
