@@ -1,6 +1,6 @@
 [package]
 name = "sendgrid_thin"
-version = "0.3.0"
+version = "0.4.0"
 edition = "2021"
 authors = ["OLoKo64 <reinaldorozatoj.11cg1@aleeas.com>"]
 description = "A small unofficial library to send emails using Sendgrid."
@@ -8,14 +8,19 @@ categories = ["api-bindings"]
 homepage = "https://sendgrid.com"
 repository = "https://github.com/OLoKo64/sendgrid_thin"
 license = "MIT"
+readme = "README.md"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
+[features]
+default = ["blocking"]
+blocking = []
+
 [dependencies]
 anyhow = "1.0.69"
-reqwest = { version = "0.11.14", features = ["blocking", "json"] }
-serde = { version = "1.0.152", features = ["derive"] }
+reqwest = { version = "0.11.14", features = ["blocking"] }
+serde = { version = "1.0.155", features = ["derive"] }
+serde_json = "1.0.94"
 
 [dev-dependencies]
-tokio = { version = "1.25.0", features = ["macros", "rt"] }
-serde_json = "1.0.93"
+tokio = { version = "1.26.0", features = ["macros", "rt"] }
