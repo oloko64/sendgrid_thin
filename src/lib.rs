@@ -395,6 +395,7 @@ impl Sendgrid {
     ///
     /// # Errors
     /// Returns an error if the request fails.
+    #[cfg(feature = "blocking")]
     pub fn send_blocking(&self) -> Result<String> {
         let client = reqwest::blocking::Client::new();
 
