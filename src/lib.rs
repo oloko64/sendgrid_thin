@@ -17,7 +17,7 @@ impl AsRef<ContentType> for ContentType {
 pub struct Sendgrid {
     api_key: String,
     send_at: Option<u64>,
-    sendgrid_email_body: String,
+    sendgrid_request_body: String,
 }
 
 #[must_use]
@@ -305,7 +305,7 @@ impl SendgridBuilder {
     pub fn build(self) -> Result<Sendgrid> {
         Ok(Sendgrid {
             api_key: self.api_key,
-            sendgrid_email_body: serde_json::to_string(&self.sendgrid_email)?,
+            sendgrid_request_body: serde_json::to_string(&self.sendgrid_email)?,
             send_at: self.sendgrid_email.send_at,
         })
     }
@@ -402,7 +402,7 @@ impl Sendgrid {
             .post("https://api.sendgrid.com/v3/mail/send")
             .bearer_auth(&self.api_key)
             .header("Content-Type", "application/json")
-            .body(self.sendgrid_email_body.clone())
+            .body(self.sendgrid_request_body.clone())
             .send()?;
 
         if !response.status().is_success() {
@@ -451,7 +451,7 @@ impl Sendgrid {
             .post("https://api.sendgrid.com/v3/mail/send")
             .bearer_auth(&self.api_key)
             .header("Content-Type", "application/json")
-            .body(self.sendgrid_email_body.clone())
+            .body(self.sendgrid_request_body.clone())
             .send()
             .await?;
 
@@ -572,7 +572,7 @@ mod tests {
         .set_content_type(ContentType::Text)
         .build()
         .unwrap();
-        assert_eq!(sendgrid.sendgrid_email_body, "{\"personalizations\":[{\"to\":[{\"email\":\"to_email@example.com\"}]}],\"from\":{\"email\":\"from_email@example.com\"},\"subject\":\"subject_test\",\"content\":[{\"type\":\"text/plain\",\"value\":\"body_test\"}]}");
+        assert_eq!(sendgrid.sendgrid_request_body, "{\"personalizations\":[{\"to\":[{\"email\":\"to_email@example.com\"}]}],\"from\":{\"email\":\"from_email@example.com\"},\"subject\":\"subject_test\",\"content\":[{\"type\":\"text/plain\",\"value\":\"body_test\"}]}");
     }
 
     #[test]
@@ -588,7 +588,7 @@ mod tests {
         .set_cc_emails(&["cc_email1@example.com", "cc_email2@example.com"])
         .build()
         .unwrap();
-        assert_eq!(sendgrid.sendgrid_email_body, "{\"personalizations\":[{\"to\":[{\"email\":\"to_email@example.com\"}],\"cc\":[{\"email\":\"cc_email1@example.com\"},{\"email\":\"cc_email2@example.com\"}]}],\"from\":{\"email\":\"from_email@example.com\"},\"subject\":\"subject_test\",\"content\":[{\"type\":\"text/plain\",\"value\":\"body_test\"}]}");
+        assert_eq!(sendgrid.sendgrid_request_body, "{\"personalizations\":[{\"to\":[{\"email\":\"to_email@example.com\"}],\"cc\":[{\"email\":\"cc_email1@example.com\"},{\"email\":\"cc_email2@example.com\"}]}],\"from\":{\"email\":\"from_email@example.com\"},\"subject\":\"subject_test\",\"content\":[{\"type\":\"text/plain\",\"value\":\"body_test\"}]}");
     }
 
     #[test]
