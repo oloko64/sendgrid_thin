@@ -1,6 +1,9 @@
-use anyhow::{bail, Result};
 use serde::Serialize;
-use std::time::{SystemTime, UNIX_EPOCH};
+use std::{
+    error::Error,
+    fmt,
+    time::{SystemTime, UNIX_EPOCH},
+};
 
 pub enum ContentType {
     Text,
@@ -13,6 +16,21 @@ impl AsRef<ContentType> for ContentType {
     }
 }
 
+#[derive(Debug, Clone, PartialEq)]
+pub struct SendgridError {
+    message: String,
+    status_code: Option<u16>,
+}
+
+impl fmt::Display for SendgridError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{}", self.message)
+    }
+}
+
+impl Error for SendgridError {}
+
+#[derive(Debug, Clone, PartialEq)]
 #[must_use]
 pub struct Sendgrid {
     api_key: String,
@@ -20,14 +38,14 @@ pub struct Sendgrid {
     sendgrid_request_body: String,
 }
 
+#[derive(Debug, Clone, PartialEq)]
 #[must_use]
 pub struct SendgridBuilder {
     api_key: String,
     sendgrid_email: SendgridEmail,
 }
 
-#[derive(Serialize)]
-#[cfg_attr(test, derive(Debug, PartialEq, Eq))]
+#[derive(Debug, Clone, PartialEq, Serialize)]
 struct SendgridEmail {
     #[serde(rename = "personalizations")]
     personalizations: [Personalization; 1],
@@ -88,8 +106,7 @@ impl SendgridEmailFirstItem for SendgridEmail {
     }
 }
 
-#[derive(Serialize)]
-#[cfg_attr(test, derive(Debug, PartialEq, Eq))]
+#[derive(Serialize, Debug, Clone, PartialEq)]
 struct Content {
     #[serde(rename = "type")]
     content_type: Option<String>,
@@ -98,15 +115,13 @@ struct Content {
     value: String,
 }
 
-#[derive(Serialize)]
-#[cfg_attr(test, derive(Debug, PartialEq, Eq))]
+#[derive(Serialize, Debug, Clone, PartialEq)]
 struct From {
     #[serde(rename = "email")]
     email: String,
 }
 
-#[derive(Serialize)]
-#[cfg_attr(test, derive(Debug, PartialEq, Eq))]
+#[derive(Serialize, Debug, Clone, PartialEq)]
 struct Personalization {
     #[serde(rename = "to")]
     to: Vec<From>,
@@ -302,10 +317,15 @@ impl SendgridBuilder {
     ///
     /// # Errors
     /// Returns an error if the Sendgrid struct is not valid.
-    pub fn build(self) -> Result<Sendgrid> {
+    pub fn build(self) -> Result<Sendgrid, SendgridError> {
         Ok(Sendgrid {
             api_key: self.api_key,
-            sendgrid_request_body: serde_json::to_string(&self.sendgrid_email)?,
+            sendgrid_request_body: serde_json::to_string(&self.sendgrid_email).map_err(|err| {
+                SendgridError {
+                    message: err.to_string(),
+                    status_code: None,
+                }
+            })?,
             send_at: self.sendgrid_email.send_at,
         })
     }
@@ -396,7 +416,7 @@ impl Sendgrid {
     /// # Errors
     /// Returns an error if the request fails.
     #[cfg(feature = "blocking")]
-    pub fn send_blocking(&self) -> Result<String> {
+    pub fn send_blocking(&self) -> Result<String, SendgridError> {
         let client = reqwest::blocking::Client::new();
 
         let response = client
@@ -404,10 +424,19 @@ impl Sendgrid {
             .bearer_auth(&self.api_key)
             .header("Content-Type", "application/json")
             .body(self.sendgrid_request_body.clone())
-            .send()?;
+            .send()
+            .map_err(|err| SendgridError {
+                message: err.to_string(),
+                status_code: None,
+            })?;
 
         if !response.status().is_success() {
-            bail!("Error sending email: {}", response.text()?);
+            return Err(SendgridError {
+                status_code: Some(response.status().as_u16()),
+                message: response
+                    .text()
+                    .unwrap_or(String::from("Error getting response text")),
+            });
         }
 
         let message = self
@@ -445,7 +474,7 @@ impl Sendgrid {
     ///
     /// # Errors
     /// Returns an error if the request fails.
-    pub async fn send(&self) -> Result<String> {
+    pub async fn send(&self) -> Result<String, SendgridError> {
         let client = reqwest::Client::new();
 
         let response = client
@@ -454,10 +483,20 @@ impl Sendgrid {
             .header("Content-Type", "application/json")
             .body(self.sendgrid_request_body.clone())
             .send()
-            .await?;
+            .await
+            .map_err(|err| SendgridError {
+                message: err.to_string(),
+                status_code: None,
+            })?;
 
         if !response.status().is_success() {
-            bail!("Error sending email: {}", response.text().await?);
+            return Err(SendgridError {
+                status_code: Some(response.status().as_u16()),
+                message: response
+                    .text()
+                    .await
+                    .unwrap_or(String::from("Error getting response text")),
+            });
         }
 
         let message = self
@@ -604,5 +643,19 @@ mod tests {
         assert_eq!(sendgrid.sendgrid_email.send_at, None);
         let sendgrid = sendgrid.set_send_at(1668271500);
         assert_eq!(sendgrid.sendgrid_email.send_at, Some(1668271500));
+    }
+
+    #[test]
+    fn test_traits() {
+        fn assert_sync_traits<T: Sized + Send + Sync + Unpin>() {}
+        assert_sync_traits::<Sendgrid>();
+        assert_sync_traits::<SendgridBuilder>();
+
+        fn assert_derived_traits<T: Clone + fmt::Debug + PartialEq>() {}
+        assert_derived_traits::<Sendgrid>();
+        assert_derived_traits::<SendgridBuilder>();
+
+        fn assert_error_traits<T: Error + Clone + PartialEq>() {}
+        assert_error_traits::<SendgridError>();
     }
 }
