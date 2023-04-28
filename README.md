@@ -29,6 +29,7 @@ I recommend the [dotenvy](https://crates.io/crates/dotenvy) crate to load the AP
             )
             .set_content_type(ContentType::Html)
             .set_send_at(1668281500)
+            .set_request_timeout(std::time::Duration::from_secs(10))
             .set_cc_emails(["cc_email_1@example.com", "cc_email_2@example.com"])
             .build()
             .unwrap();
