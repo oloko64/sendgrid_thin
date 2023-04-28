@@ -2,7 +2,7 @@ use serde::Serialize;
 use std::{
     error::Error,
     fmt,
-    time::{SystemTime, UNIX_EPOCH},
+    time::{Duration, SystemTime, UNIX_EPOCH},
 };
 
 pub enum ContentType {
@@ -35,6 +35,7 @@ impl Error for SendgridError {}
 pub struct Sendgrid {
     api_key: String,
     send_at: Option<u64>,
+    request_timeout: Option<Duration>,
     sendgrid_request_body: String,
 }
 
@@ -42,6 +43,7 @@ pub struct Sendgrid {
 #[must_use]
 pub struct SendgridBuilder {
     api_key: String,
+    request_timeout: Option<Duration>,
     sendgrid_email: SendgridEmail,
 }
 
@@ -170,6 +172,7 @@ impl SendgridBuilder {
     {
         SendgridBuilder {
             api_key: api_key.into(),
+            request_timeout: None,
             sendgrid_email: {
                 let mut sendgrid_email = SendgridEmail::default();
                 sendgrid_email.get_first_personalization().to = to_emails
@@ -291,6 +294,40 @@ impl SendgridBuilder {
         self
     }
 
+    /// Enables a request timeout.
+    ///
+    /// The timeout is applied from when the request starts connecting until the response body has finished.
+    ///
+    /// Default is no timeout for async requests and 30 seconds for blocking requests.
+    ///
+    /// # Example
+    /// ```
+    /// use sendgrid_thin::Sendgrid;
+    ///
+    /// #[tokio::main]
+    /// async fn main() {
+    ///     let sendgrid = Sendgrid::builder(
+    ///         "SENDGRID_API_KEY",
+    ///         "from_email@example.com",
+    ///         ["to_email_1@example.com","to_email_2@example.com"],
+    ///         "subject of email",
+    ///         "body of email",
+    ///      )
+    ///     .set_request_timeout(std::time::Duration::from_secs(10))
+    ///     .build()
+    ///     .unwrap();
+    ///
+    ///     match sendgrid.send().await {
+    ///         Ok(message) => println!("{message}"),
+    ///         Err(err) => println!("Error sending email: {err}"),
+    ///     }
+    /// }
+    /// ```
+    pub fn set_request_timeout(mut self, request_timeout: Duration) -> SendgridBuilder {
+        self.request_timeout = Some(request_timeout);
+        self
+    }
+
     /// Builds the Sendgrid struct.
     /// # Example
     /// ```
@@ -326,6 +363,7 @@ impl SendgridBuilder {
                     status_code: None,
                 }
             })?,
+            request_timeout: self.request_timeout,
             send_at: self.sendgrid_email.send_at,
         })
     }
@@ -417,7 +455,18 @@ impl Sendgrid {
     /// Returns an error if the request fails.
     #[cfg(feature = "blocking")]
     pub fn send_blocking(&self) -> Result<String, SendgridError> {
-        let client = reqwest::blocking::Client::new();
+        let client;
+        if let Some(request_timeout) = self.request_timeout {
+            client = reqwest::blocking::Client::builder()
+                .timeout(request_timeout)
+                .build()
+                .map_err(|err| SendgridError {
+                    message: err.to_string(),
+                    status_code: None,
+                })?;
+        } else {
+            client = reqwest::blocking::Client::new();
+        }
 
         let response = client
             .post("https://api.sendgrid.com/v3/mail/send")
@@ -475,7 +524,18 @@ impl Sendgrid {
     /// # Errors
     /// Returns an error if the request fails.
     pub async fn send(&self) -> Result<String, SendgridError> {
-        let client = reqwest::Client::new();
+        let client;
+        if let Some(request_timeout) = self.request_timeout {
+            client = reqwest::Client::builder()
+                .timeout(request_timeout)
+                .build()
+                .map_err(|err| SendgridError {
+                    message: err.to_string(),
+                    status_code: None,
+                })?;
+        } else {
+            client = reqwest::Client::new();
+        }
 
         let response = client
             .post("https://api.sendgrid.com/v3/mail/send")
@@ -643,6 +703,20 @@ mod tests {
         assert_eq!(sendgrid.sendgrid_email.send_at, None);
         let sendgrid = sendgrid.set_send_at(1668271500);
         assert_eq!(sendgrid.sendgrid_email.send_at, Some(1668271500));
+    }
+
+    #[test]
+    fn test_set_request_timeout() {
+        let sendgrid = Sendgrid::builder(
+            "SENDGRID_API_KEY",
+            "test_from@test.com",
+            ["test_to@test.com"],
+            "subject",
+            "body",
+        );
+        assert_eq!(sendgrid.request_timeout, None);
+        let sendgrid = sendgrid.set_request_timeout(Duration::from_secs(10));
+        assert_eq!(sendgrid.request_timeout, Some(Duration::from_secs(10)));
     }
 
     #[test]
