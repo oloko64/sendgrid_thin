@@ -390,19 +390,16 @@ impl Sendgrid {
         SendgridBuilder::new(api_key, from_email, to_emails, email_subject, email_body)
     }
 
-    fn is_scheduled(&self) -> Option<String> {
+    fn scheduled_message(&self) -> Result<Option<String>, SendgridError> {
         if let Some(send_at) = self.send_at {
-            let current_time = SystemTime::now()
-                .duration_since(UNIX_EPOCH)
-                .expect("Error getting current time")
-                .as_secs();
+            let current_time = SystemTime::now().duration_since(UNIX_EPOCH)?.as_secs();
             if current_time < send_at {
-                return Some(format!(
+                return Ok(Some(format!(
                     "Email successfully scheduled to be sent at {send_at}."
-                ));
+                )));
             }
         }
-        None
+        Ok(None)
     }
 
     /// Sends an email using Sendgrid API with a blocking client.
@@ -452,7 +449,7 @@ impl Sendgrid {
             .send()?;
 
         if !response.status().is_success() {
-            return Err(SendgridError::new_request_error(
+            return Err(SendgridError::new_custom_error(
                 &response
                     .text()
                     .unwrap_or(String::from("Error getting response text")),
@@ -460,7 +457,7 @@ impl Sendgrid {
         }
 
         let message = self
-            .is_scheduled()
+            .scheduled_message()?
             .unwrap_or(String::from("Email successfully sent."));
 
         Ok(message)
@@ -513,7 +510,7 @@ impl Sendgrid {
             .await?;
 
         if !response.status().is_success() {
-            return Err(SendgridError::new_request_error(
+            return Err(SendgridError::new_custom_error(
                 &response
                     .text()
                     .await
@@ -522,7 +519,7 @@ impl Sendgrid {
         }
 
         let message = self
-            .is_scheduled()
+            .scheduled_message()?
             .unwrap_or(String::from("Email successfully sent."));
 
         Ok(message)
@@ -691,7 +688,7 @@ mod tests {
         assert_derived_traits::<Sendgrid>();
         assert_derived_traits::<SendgridBuilder>();
 
-        fn assert_error_traits<T: std::error::Error + Clone + PartialEq>() {}
+        fn assert_error_traits<T: std::error::Error>() {}
         assert_error_traits::<SendgridError>();
     }
 }
