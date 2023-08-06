@@ -1,9 +1,8 @@
+mod error;
+
+use error::SendgridError;
 use serde::Serialize;
-use std::{
-    error::Error,
-    fmt,
-    time::{Duration, SystemTime, UNIX_EPOCH},
-};
+use std::time::{Duration, SystemTime, UNIX_EPOCH};
 
 pub enum ContentType {
     Text,
@@ -15,20 +14,6 @@ impl AsRef<ContentType> for ContentType {
         self
     }
 }
-
-#[derive(Debug, Clone, PartialEq)]
-pub struct SendgridError {
-    message: String,
-    status_code: Option<u16>,
-}
-
-impl fmt::Display for SendgridError {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "{}", self.message)
-    }
-}
-
-impl Error for SendgridError {}
 
 #[derive(Debug, Clone, PartialEq)]
 #[must_use]
@@ -357,12 +342,7 @@ impl SendgridBuilder {
     pub fn build(self) -> Result<Sendgrid, SendgridError> {
         Ok(Sendgrid {
             api_key: self.api_key,
-            sendgrid_request_body: serde_json::to_string(&self.sendgrid_email).map_err(|err| {
-                SendgridError {
-                    message: err.to_string(),
-                    status_code: None,
-                }
-            })?,
+            sendgrid_request_body: serde_json::to_string(&self.sendgrid_email)?,
             request_timeout: self.request_timeout,
             send_at: self.sendgrid_email.send_at,
         })
@@ -459,11 +439,7 @@ impl Sendgrid {
         if let Some(request_timeout) = self.request_timeout {
             client = reqwest::blocking::Client::builder()
                 .timeout(request_timeout)
-                .build()
-                .map_err(|err| SendgridError {
-                    message: err.to_string(),
-                    status_code: None,
-                })?;
+                .build()?;
         } else {
             client = reqwest::blocking::Client::new();
         }
@@ -473,19 +449,14 @@ impl Sendgrid {
             .bearer_auth(&self.api_key)
             .header("Content-Type", "application/json")
             .body(self.sendgrid_request_body.clone())
-            .send()
-            .map_err(|err| SendgridError {
-                message: err.to_string(),
-                status_code: None,
-            })?;
+            .send()?;
 
         if !response.status().is_success() {
-            return Err(SendgridError {
-                status_code: Some(response.status().as_u16()),
-                message: response
+            return Err(SendgridError::new_request_error(
+                &response
                     .text()
                     .unwrap_or(String::from("Error getting response text")),
-            });
+            ));
         }
 
         let message = self
@@ -528,11 +499,7 @@ impl Sendgrid {
         if let Some(request_timeout) = self.request_timeout {
             client = reqwest::Client::builder()
                 .timeout(request_timeout)
-                .build()
-                .map_err(|err| SendgridError {
-                    message: err.to_string(),
-                    status_code: None,
-                })?;
+                .build()?;
         } else {
             client = reqwest::Client::new();
         }
@@ -543,20 +510,15 @@ impl Sendgrid {
             .header("Content-Type", "application/json")
             .body(self.sendgrid_request_body.clone())
             .send()
-            .await
-            .map_err(|err| SendgridError {
-                message: err.to_string(),
-                status_code: None,
-            })?;
+            .await?;
 
         if !response.status().is_success() {
-            return Err(SendgridError {
-                status_code: Some(response.status().as_u16()),
-                message: response
+            return Err(SendgridError::new_request_error(
+                &response
                     .text()
                     .await
                     .unwrap_or(String::from("Error getting response text")),
-            });
+            ));
         }
 
         let message = self
@@ -725,11 +687,11 @@ mod tests {
         assert_sync_traits::<Sendgrid>();
         assert_sync_traits::<SendgridBuilder>();
 
-        fn assert_derived_traits<T: Clone + fmt::Debug + PartialEq>() {}
+        fn assert_derived_traits<T: Clone + std::fmt::Debug + PartialEq>() {}
         assert_derived_traits::<Sendgrid>();
         assert_derived_traits::<SendgridBuilder>();
 
-        fn assert_error_traits<T: Error + Clone + PartialEq>() {}
+        fn assert_error_traits<T: std::error::Error + Clone + PartialEq>() {}
         assert_error_traits::<SendgridError>();
     }
 }
