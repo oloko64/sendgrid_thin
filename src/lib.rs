@@ -1,6 +1,6 @@
 mod error;
 
-use error::SendgridError;
+pub use error::SendgridError;
 use serde::{Deserialize, Serialize};
 use std::time::{Duration, SystemTime, UNIX_EPOCH};
 

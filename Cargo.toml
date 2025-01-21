@@ -1,6 +1,6 @@
 [package]
 name = "sendgrid_thin"
-version = "0.5.0"
+version = "0.5.100"
 edition = "2021"
 authors = ["OLoKo64 <reinaldorozatoj.11cg1@aleeas.com>"]
 description = "A small unofficial library to send emails using Sendgrid."
