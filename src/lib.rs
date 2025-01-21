@@ -1,4 +1,4 @@
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 use std::{
     error::Error,
     fmt,
@@ -16,10 +16,22 @@ impl AsRef<ContentType> for ContentType {
     }
 }
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, Eq, PartialEq, PartialOrd, Ord, Hash, Serialize, Deserialize)]
 pub struct SendgridError {
     message: String,
     status_code: Option<u16>,
+}
+
+///
+/// This struct represents the response from the Sendgrid API.
+///
+/// `api_response`: The response from the Sendgrid API, could contain sensitive information.
+///
+/// `public_response`: A public response to be displayed, not containing any sensitive information.
+#[derive(Debug, Clone, Eq, PartialEq, PartialOrd, Ord, Hash, Serialize, Deserialize)]
+pub struct SendgridResponse {
+    pub api_response: String,
+    pub public_response: String,
 }
 
 impl fmt::Display for SendgridError {
@@ -30,7 +42,7 @@ impl fmt::Display for SendgridError {
 
 impl Error for SendgridError {}
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, Eq, PartialEq, PartialOrd, Ord, Hash, Serialize, Deserialize)]
 #[must_use]
 pub struct Sendgrid {
     api_key: String,
@@ -39,7 +51,7 @@ pub struct Sendgrid {
     sendgrid_request_body: String,
 }
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, Eq, PartialEq, PartialOrd, Ord, Hash, Serialize, Deserialize)]
 #[must_use]
 pub struct SendgridBuilder {
     api_key: String,
@@ -47,7 +59,7 @@ pub struct SendgridBuilder {
     sendgrid_email: SendgridEmail,
 }
 
-#[derive(Debug, Clone, PartialEq, Serialize)]
+#[derive(Debug, Clone, Eq, PartialEq, PartialOrd, Ord, Hash, Serialize, Deserialize)]
 struct SendgridEmail {
     #[serde(rename = "personalizations")]
     personalizations: [Personalization; 1],
@@ -108,7 +120,7 @@ impl SendgridEmailFirstItem for SendgridEmail {
     }
 }
 
-#[derive(Serialize, Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, Eq, PartialEq, PartialOrd, Ord, Hash, Serialize, Deserialize)]
 struct Content {
     #[serde(rename = "type")]
     content_type: Option<String>,
@@ -117,13 +129,13 @@ struct Content {
     value: String,
 }
 
-#[derive(Serialize, Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, Eq, PartialEq, PartialOrd, Ord, Hash, Serialize, Deserialize)]
 struct From {
     #[serde(rename = "email")]
     email: String,
 }
 
-#[derive(Serialize, Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, Eq, PartialEq, PartialOrd, Ord, Hash, Serialize, Deserialize)]
 struct Personalization {
     #[serde(rename = "to")]
     to: Vec<From>,
@@ -154,7 +166,7 @@ impl SendgridBuilder {
     ///     .unwrap();
     ///
     ///     match sendgrid.send().await {
-    ///         Ok(message) => println!("{message}"),
+    ///         Ok(response) => println!("{:?}", response),
     ///         Err(err) => println!("Error sending email: {err}"),
     ///     }
     /// }
@@ -210,7 +222,7 @@ impl SendgridBuilder {
     ///     .unwrap();
     ///
     ///     match sendgrid.send().await {
-    ///         Ok(message) => println!("{message}"),
+    ///         Ok(response) => println!("{:?}", response),
     ///         Err(err) => println!("Error sending email: {err}"),
     ///     }
     /// }
@@ -249,7 +261,7 @@ impl SendgridBuilder {
     ///     .unwrap();
     ///
     ///     match sendgrid.send().await {
-    ///         Ok(message) => println!("{message}"),
+    ///         Ok(response) => println!("{:?}", response),
     ///         Err(err) => println!("Error sending email: {err}"),
     ///     }
     /// }
@@ -284,7 +296,7 @@ impl SendgridBuilder {
     ///     .unwrap();
     ///
     ///     match sendgrid.send().await {
-    ///         Ok(message) => println!("{message}"),
+    ///         Ok(response) => println!("{:?}", response),
     ///         Err(err) => println!("Error sending email: {err}"),
     ///     }
     /// }
@@ -318,7 +330,7 @@ impl SendgridBuilder {
     ///     .unwrap();
     ///
     ///     match sendgrid.send().await {
-    ///         Ok(message) => println!("{message}"),
+    ///         Ok(response) => println!("{:?}", response),
     ///         Err(err) => println!("Error sending email: {err}"),
     ///     }
     /// }
@@ -346,7 +358,7 @@ impl SendgridBuilder {
     ///     .unwrap();
     ///
     ///     match sendgrid.send().await {
-    ///         Ok(message) => println!("{message}"),
+    ///         Ok(response) => println!("{:?}", response),
     ///         Err(err) => println!("Error sending email: {err}"),
     ///     }
     /// }
@@ -391,7 +403,7 @@ impl Sendgrid {
     ///     .unwrap();
     ///
     ///     match sendgrid.send().await {
-    ///         Ok(message) => println!("{message}"),
+    ///         Ok(response) => println!("{:?}", response),
     ///         Err(err) => println!("Error sending email: {err}"),
     ///     }
     /// }
@@ -410,7 +422,7 @@ impl Sendgrid {
         SendgridBuilder::new(api_key, from_email, to_emails, email_subject, email_body)
     }
 
-    fn is_scheduled(&self) -> Option<String> {
+    fn scheduled_message(&self) -> Option<String> {
         if let Some(send_at) = self.send_at {
             let current_time = SystemTime::now()
                 .duration_since(UNIX_EPOCH)
@@ -445,7 +457,7 @@ impl Sendgrid {
     ///     .unwrap();
     ///
     ///     match sendgrid.send_blocking() {
-    ///         Ok(message) => println!("{message}"),
+    ///         Ok(response) => println!("{:?}", response),
     ///         Err(err) => println!("Error sending email: {err}"),
     ///     }
     /// }
@@ -454,7 +466,7 @@ impl Sendgrid {
     /// # Errors
     /// Returns an error if the request fails.
     #[cfg(feature = "blocking")]
-    pub fn send_blocking(&self) -> Result<String, SendgridError> {
+    pub fn send_blocking(&self) -> Result<SendgridResponse, SendgridError> {
         let client;
         if let Some(request_timeout) = self.request_timeout {
             client = reqwest::blocking::Client::builder()
@@ -479,20 +491,27 @@ impl Sendgrid {
                 status_code: None,
             })?;
 
-        if !response.status().is_success() {
+        let response_status = response.status();
+
+        if !response_status.is_success() {
             return Err(SendgridError {
-                status_code: Some(response.status().as_u16()),
+                status_code: Some(response_status.as_u16()),
                 message: response
                     .text()
                     .unwrap_or(String::from("Error getting response text")),
             });
         }
 
-        let message = self
-            .is_scheduled()
-            .unwrap_or(String::from("Email successfully sent."));
+        let response_text = response.text().unwrap_or(format!(
+            "Error getting response text, but the response status is successful. Status: {response_status}",
+        ));
 
-        Ok(message)
+        Ok(SendgridResponse {
+            api_response: response_text,
+            public_response: self
+                .scheduled_message()
+                .unwrap_or_else(|| String::from("Email sent successfully")),
+        })
     }
 
     /// Sends an email using Sendgrid API with a non-blocking client.
@@ -515,7 +534,7 @@ impl Sendgrid {
     ///     .unwrap();
     ///
     ///     match sendgrid.send().await {
-    ///         Ok(message) => println!("{message}"),
+    ///         Ok(response) => println!("{:?}", response),
     ///         Err(err) => println!("Error sending email: {err}"),
     ///     }
     /// }
@@ -523,7 +542,7 @@ impl Sendgrid {
     ///
     /// # Errors
     /// Returns an error if the request fails.
-    pub async fn send(&self) -> Result<String, SendgridError> {
+    pub async fn send(&self) -> Result<SendgridResponse, SendgridError> {
         let client;
         if let Some(request_timeout) = self.request_timeout {
             client = reqwest::Client::builder()
@@ -549,9 +568,10 @@ impl Sendgrid {
                 status_code: None,
             })?;
 
-        if !response.status().is_success() {
+        let response_status = response.status();
+        if !response_status.is_success() {
             return Err(SendgridError {
-                status_code: Some(response.status().as_u16()),
+                status_code: Some(response_status.as_u16()),
                 message: response
                     .text()
                     .await
@@ -559,16 +579,25 @@ impl Sendgrid {
             });
         }
 
-        let message = self
-            .is_scheduled()
-            .unwrap_or(String::from("Email successfully sent."));
+        let response_text = response.text().await.unwrap_or(format!(
+            "Error getting response text, but the response status is successful. Status: {response_status}",
+        ));
 
-        Ok(message)
+        Ok(SendgridResponse {
+            api_response: response_text,
+            public_response: self
+                .scheduled_message()
+                .unwrap_or_else(|| String::from("Email sent successfully")),
+        })
     }
 }
 
 #[cfg(test)]
 mod tests {
+    use std::hash::Hash;
+
+    use serde::de::DeserializeOwned;
+
     use super::*;
 
     #[test]
@@ -725,11 +754,25 @@ mod tests {
         assert_sync_traits::<Sendgrid>();
         assert_sync_traits::<SendgridBuilder>();
 
-        fn assert_derived_traits<T: Clone + fmt::Debug + PartialEq>() {}
+        fn assert_derived_traits<
+            T: Clone
+                + fmt::Debug
+                + PartialEq
+                + Eq
+                + PartialOrd
+                + Ord
+                + Hash
+                + Serialize
+                + DeserializeOwned,
+        >() {
+        }
         assert_derived_traits::<Sendgrid>();
         assert_derived_traits::<SendgridBuilder>();
 
-        fn assert_error_traits<T: Error + Clone + PartialEq>() {}
+        fn assert_error_traits<
+            T: Error + Clone + PartialEq + Eq + fmt::Debug + Ord + PartialOrd + Hash,
+        >() {
+        }
         assert_error_traits::<SendgridError>();
     }
 }
