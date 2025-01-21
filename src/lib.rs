@@ -1,9 +1,8 @@
+mod error;
+
+use error::SendgridError;
 use serde::{Deserialize, Serialize};
-use std::{
-    error::Error,
-    fmt,
-    time::{Duration, SystemTime, UNIX_EPOCH},
-};
+use std::time::{Duration, SystemTime, UNIX_EPOCH};
 
 pub enum ContentType {
     Text,
@@ -14,12 +13,6 @@ impl AsRef<ContentType> for ContentType {
     fn as_ref(&self) -> &ContentType {
         self
     }
-}
-
-#[derive(Debug, Clone, Eq, PartialEq, PartialOrd, Ord, Hash, Serialize, Deserialize)]
-pub struct SendgridError {
-    message: String,
-    status_code: Option<u16>,
 }
 
 ///
@@ -33,14 +26,6 @@ pub struct SendgridResponse {
     pub api_response: String,
     pub public_response: String,
 }
-
-impl fmt::Display for SendgridError {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "{}", self.message)
-    }
-}
-
-impl Error for SendgridError {}
 
 #[derive(Debug, Clone, Eq, PartialEq, PartialOrd, Ord, Hash, Serialize, Deserialize)]
 #[must_use]
@@ -492,7 +477,7 @@ impl Sendgrid {
         Ok(SendgridResponse {
             api_response: response_text,
             public_response: self
-                .scheduled_message()
+                .scheduled_message()?
                 .unwrap_or_else(|| String::from("Email sent successfully")),
         })
     }
@@ -560,7 +545,7 @@ impl Sendgrid {
         Ok(SendgridResponse {
             api_response: response_text,
             public_response: self
-                .scheduled_message()
+                .scheduled_message()?
                 .unwrap_or_else(|| String::from("Email sent successfully")),
         })
     }
@@ -730,7 +715,7 @@ mod tests {
 
         fn assert_derived_traits<
             T: Clone
-                + fmt::Debug
+                + std::fmt::Debug
                 + PartialEq
                 + Eq
                 + PartialOrd
@@ -743,10 +728,7 @@ mod tests {
         assert_derived_traits::<Sendgrid>();
         assert_derived_traits::<SendgridBuilder>();
 
-        fn assert_error_traits<
-            T: Error + Clone + PartialEq + Eq + fmt::Debug + Ord + PartialOrd + Hash,
-        >() {
-        }
+        fn assert_error_traits<T: std::error::Error + std::fmt::Debug>() {}
         assert_error_traits::<SendgridError>();
     }
 }
